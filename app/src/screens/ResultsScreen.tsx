@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { evaluate, type Lift, type RuleResult } from '@formcheck/rule-engine';
 import { colors, spacing } from '../theme';
-import { Button, Card, Dim, Title } from '../components/ui';
+import { Badge, Button, Card, Dim, Title } from '../components/ui';
 import { nextDemoClip } from '../lib/demoClip';
 import { extractClipKeypoints } from '../lib/poseEstimation';
 import { liftLabel } from '../lib/programs';
@@ -151,7 +151,11 @@ export function ResultsScreen({ navigation, route }: Props) {
           <Card key={i} style={{ borderColor: SEVERITY_COLOR[f.severity] }}>
             <View style={styles.flagHeader}>
               <Text style={styles.flagTitle}>{f.description}</Text>
-              <Text style={[styles.sev, { color: SEVERITY_COLOR[f.severity] }]}>{f.severity}</Text>
+              <Badge
+                label={f.severity}
+                tone={f.severity === 'high' ? 'accent' : f.severity === 'info' ? 'neutral' : 'warning'}
+                filled
+              />
             </View>
             {f.severity !== 'info' && (
               <Dim>
@@ -194,5 +198,4 @@ const styles = StyleSheet.create({
   section: { color: colors.textDim, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 },
   flagHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing(1) },
   flagTitle: { color: colors.text, fontSize: 16, fontWeight: '600', flexShrink: 1 },
-  sev: { fontSize: 13, fontWeight: '800', textTransform: 'uppercase' },
 });

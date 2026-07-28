@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors, spacing } from '../theme';
-import { Button, Dim, Title } from '../components/ui';
+import { Button, ChoicePillGroup, Dim, Title } from '../components/ui';
 import { liftLabel } from '../lib/programs';
 import { useAppState } from '../state/AppState';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -9,7 +9,10 @@ import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SetLogger'>;
 
-const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
+const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((v) => ({
+  value: String(v),
+  label: String(v),
+}));
 
 // Speed is the contract: logging a set must stay under ~4 taps.
 export function SetLoggerScreen({ navigation, route }: Props) {
@@ -19,7 +22,7 @@ export function SetLoggerScreen({ navigation, route }: Props) {
   const lastSame = sets.find((s) => s.lift === lift);
   const [weight, setWeight] = useState(lastSame ? String(lastSame.weight) : '');
   const [reps, setReps] = useState(targetReps);
-  const [rpe, setRpe] = useState<number | undefined>(targetRpe);
+  const [rpe, setRpe] = useState<string | undefined>(targetRpe != null ? String(targetRpe) : undefined);
 
   const step = weightUnit === 'kg' ? 2.5 : 5;
   const bump = (d: number) => setWeight(String(Math.max(0, (parseFloat(weight) || 0) + d)));
@@ -35,7 +38,7 @@ export function SetLoggerScreen({ navigation, route }: Props) {
       weight: parsed,
       weight_unit: weightUnit,
       reps,
-      rpe,
+      rpe: rpe != null ? parseFloat(rpe) : undefined,
       had_video: withFormCheck,
       flag_summary: [],
     };
@@ -50,7 +53,12 @@ export function SetLoggerScreen({ navigation, route }: Props) {
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content}>
       <Title>{liftLabel(lift)}</Title>
-      <Dim>Week {week} target: {targetReps} reps{targetRpe != null ? ` @ RPE ${targetRpe}` : ''}</Dim>
+
+      <View style={styles.targetBanner}>
+        <Text style={styles.targetBannerText}>
+          Target: {targetReps} reps{targetRpe != null ? ` @ RPE ${targetRpe}` : ''}
+        </Text>
+      </View>
 
       <Text style={styles.label}>Weight ({weightUnit})</Text>
       <View style={styles.row}>
@@ -74,18 +82,13 @@ export function SetLoggerScreen({ navigation, route }: Props) {
       </View>
 
       <Text style={styles.label}>RPE (optional)</Text>
-      <View style={styles.chips}>
-        {RPE_OPTIONS.map((v) => (
-          <Pressable
-            key={v}
-            onPress={() => setRpe(rpe === v ? undefined : v)}
-            style={[styles.chip, rpe === v && styles.chipOn]}>
-            <Text style={[styles.chipText, rpe === v && styles.chipTextOn]}>{v}</Text>
-          </Pressable>
-        ))}
-      </View>
+      <ChoicePillGroup
+        options={RPE_OPTIONS}
+        value={rpe}
+        onChange={(v) => setRpe(rpe === v ? undefined : v)}
+      />
 
-      <Button label="Save set" onPress={() => save(false)} />
+      <Button label="Save set" onPress={() => save(false)} style={styles.mt} />
       {trackable && (
         <Button label="Save + film form check" kind="secondary" onPress={() => save(true)} />
       )}
@@ -102,6 +105,15 @@ export function SetLoggerScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   content: { padding: spacing(3), gap: spacing(2) },
+  targetBanner: {
+    backgroundColor: colors.accentDim,
+    borderWidth: 1,
+    borderColor: colors.accentBorder,
+    borderRadius: 12,
+    paddingVertical: spacing(1.25),
+    paddingHorizontal: spacing(2),
+  },
+  targetBannerText: { color: colors.text, fontSize: 14, fontWeight: '700' },
   label: { color: colors.textDim, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing(2), justifyContent: 'center' },
   input: {
@@ -117,16 +129,5 @@ const styles = StyleSheet.create({
     paddingVertical: spacing(1),
   },
   bigValue: { color: colors.text, fontSize: 28, fontWeight: '700', minWidth: 60, textAlign: 'center' },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) },
-  chip: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 20,
-    paddingHorizontal: spacing(1.5),
-    paddingVertical: spacing(0.75),
-    backgroundColor: colors.card,
-  },
-  chipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-  chipText: { color: colors.textDim, fontWeight: '600' },
-  chipTextOn: { color: colors.text },
+  mt: { marginTop: spacing(1) },
 });

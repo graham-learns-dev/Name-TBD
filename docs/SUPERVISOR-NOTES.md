@@ -272,6 +272,60 @@ cross-review before any implementation started.
    None of this required a device to build or verify (tsc/jest/expo export all clean,
    1002 modules) — good use of the window while Graham's phone testing is paused.
 
+8. **Visual redesign (2026-07-28)**, prompted by Graham: "learn how the RP Hypertrophy
+   app UX feels and basically copy that feel bar for bar. I want it to be super
+   intuitive." Researched via the App Store listing, reviews, and actual in-app
+   screenshots pulled from RP Strength's own marketing site
+   (`rpstrength.com/pages/hypertrophy-app` — set-logging, feedback-survey, and
+   template-list screens). Actual look: true-black background, bold red accent
+   (not blue), pill-shaped multi-choice buttons for their feedback survey, prominent
+   colored target-range banners, small-caps category badges, confident heavy
+   typography.
+
+   **Scope call, stated explicitly rather than silently decided:** adopted their
+   *visual language and component patterns*, not their *information architecture*.
+   RP's actual set-logging screen is a dense spreadsheet — every set in a table,
+   inline-editable, long-press context menus for set type. Our SetLogger stays
+   single-set-entry (weight/reps/RPE, then save), because that's what the
+   [mobile-ui contract](contracts/mobile-ui.md)'s ≤4-tap goal was built around, and a
+   power-user data table would work against "super intuitive" for a first-time user —
+   RP's own reviews call out real usability complaints in that denser model (no
+   calendar view, hunting across mesocycles for old data). If Graham wants the dense
+   table after seeing this, that's a well-scoped, separate follow-up.
+
+   **What changed:**
+   - `theme.ts`: background → true black (`#0A0A0B`), accent → bold red (`#EE3A34`,
+     replacing blue), added `accentDim`/`accentBorder` for the selected/unselected
+     pill pair RP's feedback screen uses. `fault` now equals `accent` (red is doing
+     double duty as brand color and highest-severity flag color, matching RP's
+     single-accent-color approach). Title weight bumped 700 → 800.
+   - `ui.tsx`: two new components — `ChoicePillGroup` (bold selectable pills, solid
+     red when picked / dark maroon outline when not — directly modeled on RP's
+     feedback-survey buttons) and `Badge` (small metadata tag, formalizing what
+     TodayScreen was doing with an inline one-off style).
+   - `SetLoggerScreen`: RPE selector now uses `ChoicePillGroup` instead of small
+     custom chips — same data, much closer to RP's actual touch target size and
+     selected-state boldness. Added a prominent target-range banner ("Target: 5 reps
+     @ RPE 7.5") above the inputs, mirroring RP's gold rep-range banner instead of
+     small dim text.
+   - `TodayScreen`: exercise prescriptions get the same banner treatment; form-check
+     marker now uses the shared `Badge` component.
+   - `ResultsScreen`: flag severity now renders as a filled `Badge` instead of plain
+     colored text.
+   - Every other screen (Welcome, HowItWorks, Onboarding, Camera, Program, Profile)
+     needed **zero changes** to inherit the new palette — confirmed via
+     `grep -rn "#[0-9A-Fa-f]" src` returning nothing outside `theme.ts`. Paying off
+     the discipline of never hardcoding a color outside the theme file from the start.
+   - Verified: tsc clean, 27/27 tests, `expo export --platform ios` 1002 modules,
+     6.44MB, resolves clean.
+
+   **Not done, and deliberately not attempted:** literal replication of RP's brand
+   assets (logo, wordmark styling, marketing copy) — colors and interaction *patterns*
+   aren't protectable and adopting them is completely normal competitive UX practice,
+   but literal branded assets are a different matter and weren't touched. Also not
+   done: any visual on-device confirmation (Graham's testing is still paused) — next
+   session should get a look before assuming this reads as intended on a real screen.
+
 Cross-agent payload schemas are now formal artifacts in [schemas/](schemas/)
 (`cv-keypoints.schema.json`, `rule-flags.schema.json`, JSON Schema 2020-12) — the
 CI-enforceable versions of the contracts, ready for ajv once the app repo exists.

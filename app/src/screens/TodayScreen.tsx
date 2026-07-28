@@ -1,7 +1,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, spacing } from '../theme';
-import { Button, Card, Dim, Title } from '../components/ui';
+import { Badge, Button, Card, Dim, Title } from '../components/ui';
 import { getProgram, liftLabel, prescriptionFor } from '../lib/programs';
 import { useAppState } from '../state/AppState';
 import { useNavigation } from '@react-navigation/native';
@@ -53,13 +53,15 @@ export function TodayScreen() {
               <Card key={ex.lift}>
                 <View style={styles.exHeader}>
                   <Text style={styles.exName}>{liftLabel(ex.lift)}</Text>
-                  {ex.trackable && <Text style={styles.badge}>🎥 form-check</Text>}
+                  {ex.trackable && <Badge label="🎥 form-check" />}
                 </View>
-                <Dim>
-                  {rx.sets} × {rx.reps}
-                  {rx.rpe_target != null ? ` @ RPE ${rx.rpe_target}` : ''}
-                  {rx.deload ? ' (deload)' : ''}
-                </Dim>
+                <View style={styles.targetBanner}>
+                  <Text style={styles.targetBannerText}>
+                    {rx.sets} × {rx.reps}
+                    {rx.rpe_target != null ? ` @ RPE ${rx.rpe_target}` : ''}
+                    {rx.deload ? ' · deload' : ''}
+                  </Text>
+                </View>
                 {ex.progression_note ? <Text style={styles.note}>{ex.progression_note}</Text> : null}
                 <Button
                   label="Log set"
@@ -88,19 +90,17 @@ export function TodayScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   content: { padding: spacing(3), gap: spacing(2) },
-  exHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  exHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing(1) },
   exName: { color: colors.text, fontSize: 18, fontWeight: '700' },
-  badge: {
-    color: colors.accent,
-    fontSize: 12,
-    fontWeight: '700',
+  targetBanner: {
+    backgroundColor: colors.accentDim,
     borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: 8,
-    paddingHorizontal: spacing(1),
-    paddingVertical: 2,
-    overflow: 'hidden',
+    borderColor: colors.accentBorder,
+    borderRadius: 10,
+    paddingVertical: spacing(1),
+    paddingHorizontal: spacing(1.5),
   },
-  note: { color: colors.textDim, fontSize: 12, marginTop: spacing(0.5), fontStyle: 'italic' },
+  targetBannerText: { color: colors.text, fontSize: 14, fontWeight: '700' },
+  note: { color: colors.textDim, fontSize: 12, marginTop: spacing(1), fontStyle: 'italic' },
   mt: { marginTop: spacing(1.5) },
 });
