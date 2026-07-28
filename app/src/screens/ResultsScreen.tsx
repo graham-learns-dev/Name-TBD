@@ -25,7 +25,8 @@ type Stage =
   | { kind: 'error'; message: string };
 
 export function ResultsScreen({ navigation, route }: Props) {
-  const { set, videoUri, durationMs } = route.params;
+  const { set, segments } = route.params;
+  const hasRecording = !!segments && segments.length > 0;
   const { logSet } = useAppState();
   const [stage, setStage] = useState<Stage>({ kind: 'loading' });
 
@@ -33,9 +34,9 @@ export function ResultsScreen({ navigation, route }: Props) {
     let cancelled = false;
 
     async function run() {
-      if (!videoUri) {
+      if (!segments || segments.length === 0) {
         // Defensive fallback — Results is only ever reached via Camera today, which
-        // always supplies a videoUri when recording succeeds.
+        // always supplies segments when the rolling buffer captured anything at all.
         const demo = nextDemoClip();
         if (!cancelled) {
           setStage({ kind: 'ready', result: evaluate(demo.clip), isDemo: true, demoLabel: demo.label });
@@ -43,7 +44,7 @@ export function ResultsScreen({ navigation, route }: Props) {
         return;
       }
       try {
-        const clip = await extractClipKeypoints(videoUri, set.lift as Lift, durationMs ?? 5000);
+        const clip = await extractClipKeypoints(segments, set.lift as Lift);
         if (!cancelled) {
           setStage({ kind: 'ready', result: evaluate(clip), isDemo: false });
         }
@@ -61,7 +62,7 @@ export function ResultsScreen({ navigation, route }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [videoUri, durationMs, set.lift]);
+  }, [segments, set.lift]);
 
   const useDemoInstead = () => {
     const demo = nextDemoClip();
@@ -86,7 +87,7 @@ export function ResultsScreen({ navigation, route }: Props) {
         <Text style={styles.errorTitle}>Couldn't analyze this clip</Text>
         <Dim style={styles.mt}>{stage.message}</Dim>
         <Button label="Try demo data instead" onPress={useDemoInstead} style={styles.mt} />
-        {videoUri && (
+        {hasRecording && (
           <Button label="Retake" kind="secondary" onPress={() => navigation.goBack()} style={styles.mt} />
         )}
       </View>
@@ -118,7 +119,7 @@ export function ResultsScreen({ navigation, route }: Props) {
       </Dim>
       {isDemo && (
         <Dim>
-          {videoUri
+          {hasRecording
             ? `Couldn't get a clean read on this clip, so this is bundled demo data (scenario: ${demoLabel}) — not your recording.`
             : `Demo data (scenario: ${demoLabel}).`}
         </Dim>
@@ -162,7 +163,7 @@ export function ResultsScreen({ navigation, route }: Props) {
       )}
 
       <Button label="Save to history" onPress={saveAndClose} />
-      {videoUri && (
+      {hasRecording && (
         <Button label="Retake" kind="secondary" onPress={() => navigation.goBack()} />
       )}
       <Button label="Share clip — arrives with clip-gen" kind="ghost" onPress={() => {}} />

@@ -6,22 +6,26 @@ export function Button({
   label,
   onPress,
   kind = 'primary',
+  disabled = false,
   style,
 }: {
   label: string;
   onPress: () => void;
   kind?: 'primary' | 'secondary' | 'ghost';
+  disabled?: boolean;
   style?: ViewStyle;
 }) {
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       style={({ pressed }) => [
         styles.btn,
         kind === 'primary' && { backgroundColor: colors.accent },
         kind === 'secondary' && { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
         kind === 'ghost' && { backgroundColor: 'transparent' },
         pressed && { opacity: 0.7 },
+        disabled && { opacity: 0.4 },
         style,
       ]}>
       <Text style={[styles.btnText, kind === 'ghost' && { color: colors.accent }]}>{label}</Text>

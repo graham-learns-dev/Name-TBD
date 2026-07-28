@@ -1,4 +1,5 @@
 import type { LoggedSet } from '../state/AppState';
+import type { Segment } from '../lib/poseMapping';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -11,5 +12,5 @@ export type RootStackParamList = {
     targetRpe?: number;
   };
   Camera: { set: LoggedSet };
-  Results: { set: LoggedSet; videoUri?: string; durationMs?: number };
+  Results: { set: LoggedSet; segments?: Segment[] };
 };

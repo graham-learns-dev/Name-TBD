@@ -27,12 +27,67 @@ export interface SampledPose {
   pose: RawPose | undefined;
 }
 
+// Rolling-buffer capture (2026-07-28): CameraScreen records continuously in short
+// segments and keeps only the last few, so the user never has to tap record before
+// walking into position — see SUPERVISOR-NOTES.md for why (a fixed countdown was
+// tried and worked, but this is strictly better UX). A Segment's `startMs` is its
+// position on the *combined, rebased* timeline of whatever segments are still in the
+// buffer when analysis starts — not wall-clock time, and not stable across a trim.
+export interface Segment {
+  uri: string;
+  startMs: number;
+  durationMs: number;
+}
+
+export interface ResolvedSample {
+  uri: string;
+  localMs: number;
+}
+
+/**
+ * Pure: finds which segment covers `absoluteMs` on the combined timeline and the
+ * local offset within that segment's own file. Clamps to the nearest segment if the
+ * timestamp falls outside all of them (defensive — segments should be contiguous by
+ * construction, but a clamp is cheap insurance against an off-by-one in the caller).
+ */
+export function resolveSegmentSample(segments: Segment[], absoluteMs: number): ResolvedSample | null {
+  if (segments.length === 0) {
+    return null;
+  }
+  for (const seg of segments) {
+    if (absoluteMs >= seg.startMs && absoluteMs < seg.startMs + seg.durationMs) {
+      return { uri: seg.uri, localMs: absoluteMs - seg.startMs };
+    }
+  }
+  const first = segments[0];
+  if (absoluteMs < first.startMs) {
+    return { uri: first.uri, localMs: 0 };
+  }
+  const last = segments[segments.length - 1];
+  return { uri: last.uri, localMs: Math.max(0, last.durationMs - 1) };
+}
+
+/** Pure: end time of the last segment on the combined timeline. */
+export function totalSegmentsDurationMs(segments: Segment[]): number {
+  if (segments.length === 0) {
+    return 0;
+  }
+  const last = segments[segments.length - 1];
+  return last.startMs + last.durationMs;
+}
+
 // Interim sampling rate. The CV contract targets 10 FPS sampled via a fast native
 // pipeline; each BlazePose-tfjs inference on a phone GPU via WebGL takes on the order
 // of hundreds of ms to ~1s, so sampling densely would make analysis take too long.
 // This is a real, documented accuracy tradeoff (coarser rep segmentation, less precise
 // worst-frame detection) versus the target native pipeline — see SUPERVISOR-NOTES.md.
-export const SAMPLE_COUNT = 8;
+// Bumped 8 -> 12 (2026-07-28) after Graham's first on-device test. The real root
+// cause of that miss was the recording window including several seconds of him
+// walking to the rack before the rep even started — fixed with a pre-record countdown
+// in CameraScreen, not a shorter window (a shorter window was tried first and made
+// things worse, since his setup time alone exceeded it). This frame-count bump is a
+// smaller, independent improvement on top of that fix.
+export const SAMPLE_COUNT = 12;
 
 const PRESCRIBED_VIEW: Record<Lift, View> = {
   squat: 'front_45',

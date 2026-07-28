@@ -99,17 +99,42 @@ cross-review before any implementation started.
    6.43MB bundle, resolves clean) both before and after — this is now the standard
    pre-handoff check before telling Graham to re-scan.
 
-   **Known interim limitations** (documented, not silently accepted): 8 frames per
+   **Known interim limitations** (documented, not silently accepted): 12 frames per
    clip instead of the contract's 10 FPS target (JS/WebGL inference is too slow per
    frame to sample densely — coarser rep segmentation, may miss the exact worst-fault
    frame); `view_check` is a crude detection-rate heuristic, not the shoulder-width
    check the contract specifies; `frame_index` is a sample index, not a source-video
    frame index (no consumer depends on this yet — Clip-Gen doesn't exist).
 
-   **Not yet done:** on-device timing/usability check on Graham's actual iPhone (can't
-   verify real inference latency without his hardware — next thing he should try), the
-   6 golden fixture clips, and eventually the native MediaPipe swap once/if an Apple
-   Developer account is in the picture.
+   **Round 1 on-device test (2026-07-28) found a real bug, not a model problem.**
+   Graham's first squat came back "couldn't detect a rep." Root cause: the fixed 8s
+   recording window included several seconds of him walking from the record button to
+   the rack, so the actual rep motion fell near/past the end of the sampled window.
+   Two fixes attempted in sequence:
+   1. *Shortened the recording window (8s → 6s)* — wrong direction, made it worse
+      (his stated setup time alone was ~4s). Reverted immediately, before shipping.
+   2. *Pre-record countdown (5s "get ready" before the clock starts)* — correct fix,
+      built and verified (tsc/jest/expo-doctor/bundle all clean), but not yet tested
+      on-device before Graham proposed something better.
+
+   **Shipped instead: rolling-buffer capture.** Graham's idea, and a clear UX upgrade
+   over a countdown — record continuously in the background from the moment the
+   camera's ready, no forced schedule, tap "Got it!" whenever the rep is actually
+   done. Implementation detail and the one real unverified risk (back-to-back
+   `recordAsync()` reliability on real hardware) are in
+   [docs/contracts/cv-keypoints.md](contracts/cv-keypoints.md) under "Capture flow:
+   rolling buffer, not tap-to-record." New pure/tested surface:
+   `resolveSegmentSample` + `totalSegmentsDurationMs` in `poseMapping.ts` (9 new
+   tests, 27 total in the app now). **Known gap this creates:** the recorded output is
+   now several segment files, not one video — fine for pose sampling (each sample is
+   an independent still frame) but Clip-Gen will need real video concatenation later,
+   which doesn't exist yet.
+
+   **Not yet done:** on-device verification of the rolling buffer specifically — does
+   it feel smooth, does back-to-back segment recording actually work without gaps or
+   errors on Graham's phone. This is the very next thing to confirm. Also still
+   pending: the 6 golden fixture clips, and eventually the native MediaPipe swap
+   once/if an Apple Developer account is in the picture.
 2. Rule engine as pure functions — **DONE, first pass.**
    [packages/rule-engine/](packages/rule-engine/) — zero-dependency TypeScript, all five
    v1 rules + rep segmentation + severity/scoring, 13 tests green (`npm test`, Node ≥ 23).

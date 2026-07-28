@@ -1,8 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { File } from 'expo-file-system';
 import { colors, spacing } from '../theme';
 import { Button, Dim } from '../components/ui';
+import { totalSegmentsDurationMs, type Segment } from '../lib/poseMapping';
 import { liftLabel } from '../lib/programs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
@@ -17,17 +19,115 @@ const GUIDE: Record<string, { instruction: string }> = {
   bench: { instruction: 'Film from the side — head to hips in frame' },
 };
 
-const MAX_DURATION_S = 8;
+// Rolling-buffer capture: records continuously in short segments the moment the
+// camera is ready — no tap-to-start. Root-caused on Graham's first on-device test
+// (2026-07-28): a fixed record window meant walking to the rack ate into it and
+// sometimes ate the whole rep. A pre-record countdown fixed that but still forces a
+// fixed schedule; this is strictly better — take however long you need, tap "Got it!"
+// whenever the rep is done, and we use whatever's still in the last ~15s of buffer.
+// See docs/contracts/cv-keypoints.md and SUPERVISOR-NOTES.md for the segment-file
+// (not true frame-buffer) approach and its one real unverified risk: back-to-back
+// recordAsync reliability on real hardware, which needs Graham's phone to confirm.
+const SEGMENT_S = 3;
+const MAX_SEGMENTS = 5; // ~15s rolling window
 
 export function CameraScreen({ navigation, route }: Props) {
   const { set } = route.params;
   const [permission, requestPermission] = useCameraPermissions();
   const camRef = useRef<CameraView>(null);
-  const [recording, setRecording] = useState(false);
-  const [elapsedMs, setElapsedMs] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [phase, setPhase] = useState<'buffering' | 'finishing' | 'error'>('buffering');
+  const [bufferedMs, setBufferedMs] = useState(0);
+
+  const segmentsRef = useRef<Segment[]>([]);
+  const finishingRef = useRef(false);
+  const mountedRef = useRef(true);
 
   const guide = GUIDE[set.lift] ?? GUIDE.squat;
+
+  useEffect(() => {
+    if (!permission?.granted || !cameraReady) {
+      return;
+    }
+    mountedRef.current = true;
+    finishingRef.current = false;
+    segmentsRef.current = [];
+    setBufferedMs(0);
+    setPhase('buffering');
+
+    async function recordOneSegment(): Promise<{ uri: string; durationMs: number } | null> {
+      if (!camRef.current) {
+        return null;
+      }
+      const segStart = Date.now();
+      try {
+        const video = await camRef.current.recordAsync({ maxDuration: SEGMENT_S });
+        const durationMs = Date.now() - segStart;
+        // A near-zero-length segment (e.g. stopRecording landed right as this one
+        // started) isn't useful to sample from — drop it rather than confuse the
+        // timeline math with a ~0-duration entry.
+        if (!video?.uri || durationMs < 200) {
+          return null;
+        }
+        return { uri: video.uri, durationMs };
+      } catch {
+        return null;
+      }
+    }
+
+    async function loop() {
+      while (!finishingRef.current) {
+        const result = await recordOneSegment();
+        if (!mountedRef.current) {
+          return;
+        }
+        if (!result) {
+          // Camera couldn't produce a segment. If we already have buffer, better to
+          // work with what we have than dead-end the user; if we have nothing yet,
+          // this is a real failure.
+          break;
+        }
+        const prev = segmentsRef.current;
+        const startMs =
+          prev.length === 0 ? 0 : prev[prev.length - 1].startMs + prev[prev.length - 1].durationMs;
+        let next: Segment[] = [...prev, { uri: result.uri, startMs, durationMs: result.durationMs }];
+
+        if (next.length > MAX_SEGMENTS) {
+          const dropped = next[0];
+          next = next.slice(1);
+          const rebase = next[0].startMs;
+          next = next.map((s) => ({ ...s, startMs: s.startMs - rebase }));
+          try {
+            new File(dropped.uri).delete();
+          } catch {
+            // Best-effort cleanup — a leaked temp file isn't worth failing capture over.
+          }
+        }
+
+        segmentsRef.current = next;
+        if (mountedRef.current) {
+          setBufferedMs(totalSegmentsDurationMs(next));
+        }
+      }
+
+      if (!mountedRef.current) {
+        return;
+      }
+      if (segmentsRef.current.length === 0) {
+        setPhase('error');
+        return;
+      }
+      navigation.navigate('Results', { set, segments: segmentsRef.current });
+    }
+
+    loop();
+
+    return () => {
+      mountedRef.current = false;
+      finishingRef.current = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permission?.granted, cameraReady]);
 
   if (!permission) {
     return <View style={styles.root} />;
@@ -42,59 +142,69 @@ export function CameraScreen({ navigation, route }: Props) {
     );
   }
 
-  const startRecording = async () => {
-    if (!camRef.current || recording) {
+  const finish = () => {
+    if (finishingRef.current) {
       return;
     }
-    setRecording(true);
-    setElapsedMs(0);
-    const start = Date.now();
-    timerRef.current = setInterval(() => setElapsedMs(Date.now() - start), 100);
-
-    try {
-      const video = await camRef.current.recordAsync({ maxDuration: MAX_DURATION_S });
-      // Read the elapsed time from the clock, not the `elapsedMs` state — that state
-      // was captured stale in this closure at button-press time (still 0).
-      const finalDurationMs = Date.now() - start;
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      setRecording(false);
-      if (video?.uri) {
-        navigation.navigate('Results', { set, videoUri: video.uri, durationMs: finalDurationMs });
-      }
-    } catch {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      setRecording(false);
-    }
+    finishingRef.current = true;
+    setPhase('finishing');
+    camRef.current?.stopRecording();
   };
 
-  const stopRecording = () => camRef.current?.stopRecording();
-  const pct = Math.min(1, elapsedMs / (MAX_DURATION_S * 1000));
+  const cancel = () => {
+    finishingRef.current = true;
+    camRef.current?.stopRecording();
+    navigation.goBack();
+  };
+
+  const retry = () => {
+    segmentsRef.current = [];
+    setBufferedMs(0);
+    setPhase('buffering');
+    // Re-trigger the effect by toggling cameraReady off/on next tick.
+    setCameraReady(false);
+    setTimeout(() => setCameraReady(true), 0);
+  };
 
   return (
     <View style={styles.root}>
-      <CameraView ref={camRef} style={StyleSheet.absoluteFill} facing="back" mode="video" mute />
+      <CameraView
+        ref={camRef}
+        style={StyleSheet.absoluteFill}
+        facing="back"
+        mode="video"
+        mute
+        onCameraReady={() => setCameraReady(true)}
+      />
 
       <View style={styles.overlay} pointerEvents="none">
         <View style={styles.guideBox} />
         <Text style={styles.instruction}>{guide.instruction}</Text>
       </View>
 
-      {recording && (
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${pct * 100}%` }]} />
+      {phase === 'buffering' && cameraReady && (
+        <View style={styles.recIndicator} pointerEvents="none">
+          <View style={styles.recDot} />
+          <Text style={styles.recText}>Ready — do your rep whenever</Text>
+        </View>
+      )}
+
+      {phase === 'error' && (
+        <View style={[styles.overlay, styles.errorBox]}>
+          <Text style={styles.errorTitle}>Couldn't capture that</Text>
+          <Dim style={styles.mt}>The camera didn't produce any footage to analyze.</Dim>
+          <Button label="Try again" onPress={retry} style={styles.mt} />
         </View>
       )}
 
       <View style={styles.controls}>
-        {!recording ? (
-          <Button label={`Record ${liftLabel(set.lift)}`} onPress={startRecording} />
-        ) : (
-          <Button label="Stop" kind="secondary" onPress={stopRecording} />
+        {phase === 'buffering' && (
+          <>
+            <Button label="Got it!" onPress={finish} disabled={bufferedMs < 500} />
+            <Button label="Cancel" kind="ghost" onPress={cancel} style={styles.mt} />
+          </>
         )}
+        {phase === 'finishing' && <Dim>Wrapping up…</Dim>}
       </View>
     </View>
   );
@@ -133,14 +243,28 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
   },
-  progressTrack: {
+  recIndicator: {
     position: 'absolute',
-    top: 0,
+    top: spacing(6),
     left: 0,
     right: 0,
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing(1),
   },
-  progressFill: { height: 4, backgroundColor: colors.fault },
+  recDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.fault },
+  recText: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '600',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: spacing(1.5),
+    paddingVertical: spacing(0.5),
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  errorBox: { backgroundColor: 'rgba(0,0,0,0.6)' },
+  errorTitle: { color: colors.fault, fontSize: 18, fontWeight: '700' },
   controls: { position: 'absolute', bottom: spacing(4), left: 0, right: 0, alignItems: 'center' },
 });

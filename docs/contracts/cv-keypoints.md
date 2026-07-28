@@ -25,19 +25,48 @@ frame extraction + inference).
 
 - Frame extraction: **still frames via `expo-video-thumbnails`**, not a real frame
   decoder — `getThumbnailAsync(uri, { time })` at N evenly-spaced timestamps.
-- Sampling: **8 evenly-spaced frames per clip**, not 10 FPS. Each BlazePose-tfjs
+- Sampling: **12 evenly-spaced frames per clip**, not 10 FPS. Each BlazePose-tfjs
   inference on a phone GPU via WebGL takes on the order of hundreds of ms to ~1s with
   no native acceleration; sampling densely would make analysis too slow. This is a
   real, deliberate accuracy tradeoff (coarser rep segmentation, less precise
-  worst-frame detection) versus the target native pipeline — revisit the count once
-  Graham reports actual on-device timing.
+  worst-frame detection) versus the target native pipeline. (Was 8; bumped to 12
+  2026-07-28 alongside the capture-flow fix below.)
 - `view_check` heuristic is simplified: `pass`/`warn`/`fail` from the fraction of
   sampled frames with any detected pose at all (≥80% / 50–80% / <50%), not the
   shoulder-width-ratio check originally specified — that needs calibration data this
   interim pipeline doesn't have yet.
-- `frame_index` is the sample index (0..7), not an index into the source video's frame
+- `frame_index` is the sample index (0..11), not an index into the source video's frame
   sequence — there's no full frame decode in this pipeline. `timestamp_ms` remains the
   authoritative field for any future consumer, per the existing note below.
+
+### Capture flow: rolling buffer, not tap-to-record (2026-07-28)
+
+Graham's first on-device test missed his squat entirely: a single fixed-length
+recording window meant the several seconds spent walking from the record button to
+the rack ate into (and sometimes consumed all of) the sample window. A pre-record
+countdown was built and worked, but forces a fixed schedule. Shipped instead: **the
+camera records continuously in short segments from the moment it's ready — no tap to
+start.** `CameraScreen` loops `recordAsync({ maxDuration: 3 })` back-to-back, keeps
+only the last 5 segments (~15s rolling window, deleting older segment files as they
+age out), and the user taps **"Got it!"** whenever their rep is done — however long
+that takes. `stopRecording()` ends the current segment early; whatever's left in the
+buffer becomes the source for analysis.
+
+This means "the clip" is no longer a single video file — it's an ordered list of
+segment files with timeline offsets (`Segment { uri, startMs, durationMs }`,
+`app/src/lib/poseMapping.ts`). Sampling resolves each of the 12 timestamps to
+whichever segment covers it (`resolveSegmentSample`, pure and unit-tested) and pulls
+a thumbnail from that segment's own local offset — **no real video concatenation
+happens.** That's fine for pose analysis (each sample is an independent still frame
+regardless of which file it came from) but is a known gap for the future Clip-Gen
+workstream, which will need an actual merged/trimmed video to render and share. Flag
+this contract implication to whoever picks up Clip-Gen.
+
+**One real, unverified risk:** whether calling `recordAsync()` again immediately
+after the previous call resolves — repeatedly, for however long the user takes to
+get ready — works smoothly on real hardware, or causes a flicker/gap/occasional
+failure. Can't be verified without a physical device; ask Graham to report exactly
+what he sees (smooth, a visible stutter between segments, or errors) on his next test.
 
 ## Coordinate spaces — the part everyone gets wrong
 

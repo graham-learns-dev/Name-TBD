@@ -7,7 +7,14 @@ import { File } from 'expo-file-system';
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import type { ClipKeypoints, Lift } from '@formcheck/rule-engine';
 import { getDetector } from './poseModel';
-import { posesToClipKeypoints, SAMPLE_COUNT, type SampledPose } from './poseMapping';
+import {
+  posesToClipKeypoints,
+  resolveSegmentSample,
+  SAMPLE_COUNT,
+  totalSegmentsDurationMs,
+  type Segment,
+  type SampledPose,
+} from './poseMapping';
 
 async function tensorFromThumbnail(uri: string): Promise<Tensor3D> {
   const file = new File(uri);
@@ -16,27 +23,34 @@ async function tensorFromThumbnail(uri: string): Promise<Tensor3D> {
 }
 
 /**
- * Extracts SAMPLE_COUNT still frames from the recorded video, runs the (lazily
- * loaded, reused) BlazePose detector on each, and maps the result into a
+ * Extracts SAMPLE_COUNT still frames spread across the combined timeline of a rolling
+ * capture buffer (multiple short video segments, see CameraScreen), running the
+ * (lazily loaded, reused) BlazePose detector on each, and maps the result into a
  * ClipKeypoints ready for @formcheck/rule-engine's evaluate(). Never throws for a
  * single bad frame — a frame that fails to decode/detect is just dropped.
  */
 export async function extractClipKeypoints(
-  videoUri: string,
+  segments: Segment[],
   lift: Lift,
-  durationMs: number,
 ): Promise<ClipKeypoints> {
   const detector = await getDetector();
   const clipId = `rec-${Date.now()}`;
-  const span = Math.max(durationMs, 1000);
+  const totalMs = Math.max(totalSegmentsDurationMs(segments), 1000);
   const timestamps = Array.from({ length: SAMPLE_COUNT }, (_, i) =>
-    Math.round(((i + 0.5) / SAMPLE_COUNT) * span),
+    Math.round(((i + 0.5) / SAMPLE_COUNT) * totalMs),
   );
 
   const samples: SampledPose[] = [];
   for (const timestampMs of timestamps) {
+    const resolved = resolveSegmentSample(segments, timestampMs);
+    if (!resolved) {
+      samples.push({ timestampMs, width: 0, height: 0, pose: undefined });
+      continue;
+    }
     try {
-      const thumb = await VideoThumbnails.getThumbnailAsync(videoUri, { time: timestampMs });
+      const thumb = await VideoThumbnails.getThumbnailAsync(resolved.uri, {
+        time: resolved.localMs,
+      });
       const tensor = await tensorFromThumbnail(thumb.uri);
       try {
         const poses = await detector.estimatePoses(tensor, { flipHorizontal: false });

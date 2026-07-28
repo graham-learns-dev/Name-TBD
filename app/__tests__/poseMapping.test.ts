@@ -5,7 +5,15 @@
  * @format
  */
 import { evaluate } from '@formcheck/rule-engine';
-import { barProxyFor, posesToClipKeypoints, type RawPose, type SampledPose } from '../src/lib/poseMapping';
+import {
+  barProxyFor,
+  posesToClipKeypoints,
+  resolveSegmentSample,
+  totalSegmentsDurationMs,
+  type RawPose,
+  type SampledPose,
+  type Segment,
+} from '../src/lib/poseMapping';
 
 // A minimally-posed "standing" skeleton, all 16 needed landmarks present at
 // reasonable confidence — enough to build valid frames without triggering any rule.
@@ -136,5 +144,63 @@ describe('posesToClipKeypoints', () => {
     const clip = posesToClipKeypoints({ clipId: 'test-9', lift: 'squat', samples });
     const result = evaluate(clip);
     expect(result.flags[0]?.issue).toBe('no_rep_detected');
+  });
+});
+
+// ------------------------------------------------------------------------------
+// Rolling-buffer segment resolution (CameraScreen's segmented capture, 2026-07-28)
+
+describe('resolveSegmentSample', () => {
+  const segments: Segment[] = [
+    { uri: 'seg-a', startMs: 0, durationMs: 3000 },
+    { uri: 'seg-b', startMs: 3000, durationMs: 3000 },
+    { uri: 'seg-c', startMs: 6000, durationMs: 1500 }, // final segment, cut short
+  ];
+
+  test('resolves a timestamp within the first segment', () => {
+    expect(resolveSegmentSample(segments, 1000)).toEqual({ uri: 'seg-a', localMs: 1000 });
+  });
+
+  test('resolves a timestamp within a middle segment, offset correctly', () => {
+    expect(resolveSegmentSample(segments, 4200)).toEqual({ uri: 'seg-b', localMs: 1200 });
+  });
+
+  test('resolves a timestamp exactly on a segment boundary to the later segment', () => {
+    expect(resolveSegmentSample(segments, 3000)).toEqual({ uri: 'seg-b', localMs: 0 });
+  });
+
+  test('resolves a timestamp in the short final segment', () => {
+    expect(resolveSegmentSample(segments, 7000)).toEqual({ uri: 'seg-c', localMs: 1000 });
+  });
+
+  test('clamps a timestamp past the end of all segments to the last one', () => {
+    expect(resolveSegmentSample(segments, 99999)).toEqual({ uri: 'seg-c', localMs: 1499 });
+  });
+
+  test('clamps a negative timestamp to the start of the first segment', () => {
+    expect(resolveSegmentSample(segments, -500)).toEqual({ uri: 'seg-a', localMs: 0 });
+  });
+
+  test('returns null for an empty segment list', () => {
+    expect(resolveSegmentSample([], 1000)).toBeNull();
+  });
+
+  test('handles a single segment', () => {
+    const single: Segment[] = [{ uri: 'only', startMs: 0, durationMs: 3000 }];
+    expect(resolveSegmentSample(single, 1500)).toEqual({ uri: 'only', localMs: 1500 });
+  });
+});
+
+describe('totalSegmentsDurationMs', () => {
+  test('sums to the end of the last segment, not a naive sum of durations', () => {
+    const segments: Segment[] = [
+      { uri: 'a', startMs: 0, durationMs: 3000 },
+      { uri: 'b', startMs: 3000, durationMs: 1200 }, // shorter, cut short by "Got it!"
+    ];
+    expect(totalSegmentsDurationMs(segments)).toBe(4200);
+  });
+
+  test('is zero for an empty list', () => {
+    expect(totalSegmentsDurationMs([])).toBe(0);
   });
 });
