@@ -3,6 +3,7 @@ import type { Segment } from '../lib/poseMapping';
 
 export type RootStackParamList = {
   Welcome: undefined;
+  HowItWorks: { from?: 'onboarding' | 'profile' } | undefined;
   Onboarding: undefined;
   Tabs: undefined;
   SetLogger: {

@@ -170,9 +170,10 @@ cross-review before any implementation started.
 
    **Not yet done:** confirmation that the timeout fix actually resolves the hang on
    Graham's phone (does the buffer now visibly climb, does "Got it!" resolve within
-   ~8s even in the worst case) — the very next thing to check. Also still pending: the
-   6 golden fixture clips, and eventually the native MediaPipe swap once/if an Apple
-   Developer account is in the picture.
+   ~8s even in the worst case) — Graham paused device testing for now (2026-07-28), so
+   this is unverified until his next session. Also still pending: the 6 golden fixture
+   clips, and eventually the native MediaPipe swap once/if an Apple Developer account
+   is in the picture.
 2. Rule engine as pure functions — **DONE, first pass.**
    [packages/rule-engine/](packages/rule-engine/) — zero-dependency TypeScript, all five
    v1 rules + rep segmentation + severity/scoring, 13 tests green (`npm test`, Node ≥ 23).
@@ -241,9 +242,35 @@ cross-review before any implementation started.
    history; log set → form check (rotating demo clips: clean / valgus / high-squat /
    both) → score ring + flag cards → save → history; unit toggle; program week view.
    This is the first real device confirmation of the whole v1 UI shell, not just tests.
-6. Program JSONs — **2 of 5 done** ([programs/](programs/), free tier:
-   `beginner_full_body_3d`, `beginner_upper_lower`), contract-validated via
-   `programs/validate.mjs`. Paid three follow the same shape once a lifter reviews these.
+6. Program JSONs — **5 of 5 written (2026-07-28)**, all contract-validated via
+   `programs/validate.mjs` and mirrored into `backend/seed/programs_seed.sql`.
+   [programs/](programs/): free tier `beginner_full_body_3d`, `beginner_upper_lower`
+   (unchanged); paid tier `int_upper_lower`, `int_sbd_focus`, `int_full_body_3d` — all
+   intermediate, 6-week RPE-based blocks, same schema as the free two (deliberately
+   stayed RPE-based rather than switching to `intensity_pct`, since the app has no
+   "enter your training max" flow yet to make percentages meaningful).
+   **Still needs a real lifter's review pass** — these are structurally sound and
+   contract-valid but not yet sanity-checked by someone who actually programs.
+   **Deliberately NOT wired into the app's program picker yet:** `app/src/lib/
+   programs.ts` still only bundles the two free templates. Surfacing the paid three
+   needs locked/paywall UI (per docs/contracts/mobile-ui.md's "Program tab: locked
+   program templates show paywall on tap") which doesn't exist — bundling them
+   unlocked would let anyone select a paid program for free. That paywall UI is a
+   separate, not-yet-scoped piece of work.
+
+7. **UX pass (2026-07-28)**, prompted by Graham: "the app isn't self-explanatory."
+   - New [HowItWorksScreen](../app/src/screens/HowItWorksScreen.tsx): 3-step explainer
+     (log sets / film the big three, on-device & private / see what to fix), shown
+     once between Welcome and program selection, and revisitable anytime from
+     Profile → "How this app works." Registered outside the onboarded/not-onboarded
+     ternary in navigation so one screen serves both entry points.
+   - CameraScreen: added a persistent caption above the "Got it!" button — "No need
+     to hit record — do your rep, then tap below" — since the passive rolling-buffer
+     capture (no explicit record action) is a genuinely novel interaction pattern that
+     isn't self-evident on first use.
+   - Today tab: form-check badge got a 🎥 for scannability.
+   None of this required a device to build or verify (tsc/jest/expo export all clean,
+   1002 modules) — good use of the window while Graham's phone testing is paused.
 
 Cross-agent payload schemas are now formal artifacts in [schemas/](schemas/)
 (`cv-keypoints.schema.json`, `rule-flags.schema.json`, JSON Schema 2020-12) — the

@@ -53,7 +53,7 @@ export function TodayScreen() {
               <Card key={ex.lift}>
                 <View style={styles.exHeader}>
                   <Text style={styles.exName}>{liftLabel(ex.lift)}</Text>
-                  {ex.trackable && <Text style={styles.badge}>form-check</Text>}
+                  {ex.trackable && <Text style={styles.badge}>🎥 form-check</Text>}
                 </View>
                 <Dim>
                   {rx.sets} × {rx.reps}

@@ -1,0 +1,148 @@
+{
+  "schema_version": "1.0",
+  "program_id": "int_full_body_3d",
+  "name": "Intermediate Full Body",
+  "description": "3 days/week, RPE-based 6-week block. Full-body sessions for lifters who want the big three trained often but only have three days to train.",
+  "level": "intermediate",
+  "days_per_week": 3,
+  "weeks": 6,
+  "deload_week": 6,
+  "is_free": false,
+  "sessions": [
+    {
+      "day": 1,
+      "name": "Full Body A",
+      "exercises": [
+        {
+          "lift": "squat",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 4, "reps": 5, "rpe_target": 7.5 },
+            { "week": 2, "sets": 4, "reps": 5, "rpe_target": 8 },
+            { "week": 3, "sets": 5, "reps": 4, "rpe_target": 8 },
+            { "week": 4, "sets": 5, "reps": 3, "rpe_target": 8.5 },
+            { "week": 5, "sets": 4, "reps": 3, "rpe_target": 9 },
+            { "week": 6, "sets": 2, "reps": 5, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add 2.5 kg / 5 lb whenever every set finishes at or below target RPE."
+        },
+        {
+          "lift": "bench",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 4, "reps": 6, "rpe_target": 7.5 },
+            { "week": 2, "sets": 4, "reps": 6, "rpe_target": 8 },
+            { "week": 3, "sets": 4, "reps": 5, "rpe_target": 8 },
+            { "week": 4, "sets": 4, "reps": 4, "rpe_target": 8.5 },
+            { "week": 5, "sets": 4, "reps": 4, "rpe_target": 8.5 },
+            { "week": 6, "sets": 2, "reps": 6, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add 2.5 kg / 5 lb whenever every set finishes at or below target RPE."
+        },
+        {
+          "lift": "barbell_row",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 8, "rpe_target": 8 },
+            { "week": 2, "sets": 3, "reps": 8, "rpe_target": 8 },
+            { "week": 3, "sets": 4, "reps": 8, "rpe_target": 8 },
+            { "week": 4, "sets": 4, "reps": 6, "rpe_target": 8 },
+            { "week": 5, "sets": 4, "reps": 6, "rpe_target": 8.5 },
+            { "week": 6, "sets": 2, "reps": 8, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Back volume to balance the pressing — keep strict form over load."
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "name": "Full Body B",
+      "exercises": [
+        {
+          "lift": "deadlift",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 5, "rpe_target": 7.5 },
+            { "week": 2, "sets": 3, "reps": 5, "rpe_target": 8 },
+            { "week": 3, "sets": 4, "reps": 4, "rpe_target": 8 },
+            { "week": 4, "sets": 4, "reps": 3, "rpe_target": 8.5 },
+            { "week": 5, "sets": 3, "reps": 2, "rpe_target": 9 },
+            { "week": 6, "sets": 1, "reps": 5, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add 5 kg / 10 lb whenever every set finishes at or below target RPE."
+        },
+        {
+          "lift": "overhead_press",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 8, "rpe_target": 7.5 },
+            { "week": 2, "sets": 3, "reps": 8, "rpe_target": 8 },
+            { "week": 3, "sets": 4, "reps": 6, "rpe_target": 8 },
+            { "week": 4, "sets": 4, "reps": 6, "rpe_target": 8 },
+            { "week": 5, "sets": 4, "reps": 6, "rpe_target": 8.5 },
+            { "week": 6, "sets": 2, "reps": 8, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add 1.25 kg / 2.5 lb whenever every set finishes at or below target RPE."
+        },
+        {
+          "lift": "lat_pulldown",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 2, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 3, "sets": 4, "reps": 10, "rpe_target": 8 },
+            { "week": 4, "sets": 4, "reps": 10, "rpe_target": 8 },
+            { "week": 5, "sets": 4, "reps": 10, "rpe_target": 8.5 },
+            { "week": 6, "sets": 2, "reps": 12, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add reps to the top of the range, then add weight and reset."
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "name": "Full Body C",
+      "exercises": [
+        {
+          "lift": "squat",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 8, "rpe_target": 6.5 },
+            { "week": 2, "sets": 3, "reps": 8, "rpe_target": 7 },
+            { "week": 3, "sets": 3, "reps": 6, "rpe_target": 7 },
+            { "week": 4, "sets": 3, "reps": 6, "rpe_target": 7.5 },
+            { "week": 5, "sets": 3, "reps": 6, "rpe_target": 7.5 },
+            { "week": 6, "sets": 2, "reps": 8, "rpe_target": 5.5, "deload": true }
+          ],
+          "progression_note": "Volume day — stays 1.5-2 RPE below Day 1 squat at the same weight."
+        },
+        {
+          "lift": "bench",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 10, "rpe_target": 6.5 },
+            { "week": 2, "sets": 3, "reps": 10, "rpe_target": 7 },
+            { "week": 3, "sets": 3, "reps": 8, "rpe_target": 7 },
+            { "week": 4, "sets": 3, "reps": 8, "rpe_target": 7.5 },
+            { "week": 5, "sets": 3, "reps": 8, "rpe_target": 7.5 },
+            { "week": 6, "sets": 2, "reps": 10, "rpe_target": 5.5, "deload": true }
+          ],
+          "progression_note": "Volume day — stays 1.5-2 RPE below Day 1 bench at the same weight."
+        },
+        {
+          "lift": "romanian_deadlift",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 8, "rpe_target": 7.5 },
+            { "week": 2, "sets": 3, "reps": 8, "rpe_target": 8 },
+            { "week": 3, "sets": 3, "reps": 8, "rpe_target": 8 },
+            { "week": 4, "sets": 3, "reps": 6, "rpe_target": 8 },
+            { "week": 5, "sets": 3, "reps": 6, "rpe_target": 8.5 },
+            { "week": 6, "sets": 2, "reps": 8, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Posterior chain volume — add weight when form stays tight through the last rep."
+        }
+      ]
+    }
+  ]
+}

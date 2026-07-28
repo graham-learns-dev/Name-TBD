@@ -1,0 +1,193 @@
+{
+  "schema_version": "1.0",
+  "program_id": "int_sbd_focus",
+  "name": "SBD Focus",
+  "description": "4 days/week, RPE-based 6-week block built around squat, bench, and deadlift as the main event every session — for lifters prioritizing the three competition lifts.",
+  "level": "intermediate",
+  "days_per_week": 4,
+  "weeks": 6,
+  "deload_week": 6,
+  "is_free": false,
+  "sessions": [
+    {
+      "day": 1,
+      "name": "Squat Day",
+      "exercises": [
+        {
+          "lift": "squat",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 5, "reps": 5, "rpe_target": 7.5 },
+            { "week": 2, "sets": 5, "reps": 4, "rpe_target": 8 },
+            { "week": 3, "sets": 5, "reps": 3, "rpe_target": 8 },
+            { "week": 4, "sets": 5, "reps": 3, "rpe_target": 8.5 },
+            { "week": 5, "sets": 4, "reps": 2, "rpe_target": 9 },
+            { "week": 6, "sets": 2, "reps": 5, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Main lift of the week. Add 2.5 kg / 5 lb whenever every set finishes at or below target RPE."
+        },
+        {
+          "lift": "pause_squat",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 5, "rpe_target": 7.5 },
+            { "week": 2, "sets": 3, "reps": 5, "rpe_target": 8 },
+            { "week": 3, "sets": 3, "reps": 4, "rpe_target": 8 },
+            { "week": 4, "sets": 3, "reps": 4, "rpe_target": 8 },
+            { "week": 5, "sets": 3, "reps": 3, "rpe_target": 8 },
+            { "week": 6, "sets": 2, "reps": 5, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "2-second pause at the bottom — builds out-of-the-hole strength. Lighter than the main squat."
+        },
+        {
+          "lift": "leg_press",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 2, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 3, "sets": 3, "reps": 10, "rpe_target": 8 },
+            { "week": 4, "sets": 3, "reps": 10, "rpe_target": 8 },
+            { "week": 5, "sets": 3, "reps": 10, "rpe_target": 8 },
+            { "week": 6, "sets": 2, "reps": 12, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Quad volume to backfill the squat — add weight once RPE target is easily met."
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "name": "Bench Day",
+      "exercises": [
+        {
+          "lift": "bench",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 5, "reps": 5, "rpe_target": 7.5 },
+            { "week": 2, "sets": 5, "reps": 4, "rpe_target": 8 },
+            { "week": 3, "sets": 5, "reps": 3, "rpe_target": 8 },
+            { "week": 4, "sets": 5, "reps": 3, "rpe_target": 8.5 },
+            { "week": 5, "sets": 4, "reps": 2, "rpe_target": 9 },
+            { "week": 6, "sets": 2, "reps": 5, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Main lift of the week. Add 2.5 kg / 5 lb whenever every set finishes at or below target RPE."
+        },
+        {
+          "lift": "close_grip_bench",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 8, "rpe_target": 7.5 },
+            { "week": 2, "sets": 3, "reps": 8, "rpe_target": 8 },
+            { "week": 3, "sets": 3, "reps": 6, "rpe_target": 8 },
+            { "week": 4, "sets": 3, "reps": 6, "rpe_target": 8 },
+            { "week": 5, "sets": 3, "reps": 5, "rpe_target": 8 },
+            { "week": 6, "sets": 2, "reps": 8, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Triceps/lockout strength — add weight when reps feel solid at target RPE."
+        },
+        {
+          "lift": "barbell_row",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 4, "reps": 8, "rpe_target": 8 },
+            { "week": 2, "sets": 4, "reps": 8, "rpe_target": 8 },
+            { "week": 3, "sets": 4, "reps": 6, "rpe_target": 8 },
+            { "week": 4, "sets": 4, "reps": 6, "rpe_target": 8 },
+            { "week": 5, "sets": 4, "reps": 6, "rpe_target": 8 },
+            { "week": 6, "sets": 2, "reps": 8, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Back volume to balance the pressing and protect the shoulders."
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "name": "Deadlift Day",
+      "exercises": [
+        {
+          "lift": "deadlift",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 4, "reps": 4, "rpe_target": 7.5 },
+            { "week": 2, "sets": 4, "reps": 3, "rpe_target": 8 },
+            { "week": 3, "sets": 4, "reps": 3, "rpe_target": 8 },
+            { "week": 4, "sets": 4, "reps": 2, "rpe_target": 8.5 },
+            { "week": 5, "sets": 3, "reps": 1, "rpe_target": 9 },
+            { "week": 6, "sets": 1, "reps": 5, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Main lift of the week. Add 5 kg / 10 lb whenever every set finishes at or below target RPE."
+        },
+        {
+          "lift": "deficit_deadlift",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 4, "rpe_target": 7.5 },
+            { "week": 2, "sets": 3, "reps": 4, "rpe_target": 8 },
+            { "week": 3, "sets": 3, "reps": 3, "rpe_target": 8 },
+            { "week": 4, "sets": 3, "reps": 3, "rpe_target": 8 },
+            { "week": 5, "sets": 2, "reps": 3, "rpe_target": 8 },
+            { "week": 6, "sets": 2, "reps": 5, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "1-inch deficit — builds strength off the floor. Lighter than the main deadlift."
+        },
+        {
+          "lift": "hanging_leg_raise",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 2, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 3, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 4, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 5, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 6, "sets": 2, "reps": 12, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Bodyweight core — add a slow negative or ankle weight once 3x12 is easy."
+        }
+      ]
+    },
+    {
+      "day": 4,
+      "name": "SBD Technique & Volume",
+      "exercises": [
+        {
+          "lift": "squat",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 6, "rpe_target": 6.5 },
+            { "week": 2, "sets": 3, "reps": 6, "rpe_target": 7 },
+            { "week": 3, "sets": 3, "reps": 5, "rpe_target": 7 },
+            { "week": 4, "sets": 3, "reps": 5, "rpe_target": 7.5 },
+            { "week": 5, "sets": 3, "reps": 5, "rpe_target": 7.5 },
+            { "week": 6, "sets": 2, "reps": 6, "rpe_target": 5.5, "deload": true }
+          ],
+          "progression_note": "Light technique work — stays well below Day 1 squat intensity, focus on bar speed and depth."
+        },
+        {
+          "lift": "bench",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 6, "rpe_target": 6.5 },
+            { "week": 2, "sets": 3, "reps": 6, "rpe_target": 7 },
+            { "week": 3, "sets": 3, "reps": 5, "rpe_target": 7 },
+            { "week": 4, "sets": 3, "reps": 5, "rpe_target": 7.5 },
+            { "week": 5, "sets": 3, "reps": 5, "rpe_target": 7.5 },
+            { "week": 6, "sets": 2, "reps": 6, "rpe_target": 5.5, "deload": true }
+          ],
+          "progression_note": "Light technique work — stays well below Day 2 bench intensity, focus on bar path."
+        },
+        {
+          "lift": "face_pull",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 15, "rpe_target": 7 },
+            { "week": 2, "sets": 3, "reps": 15, "rpe_target": 7 },
+            { "week": 3, "sets": 3, "reps": 15, "rpe_target": 7.5 },
+            { "week": 4, "sets": 3, "reps": 15, "rpe_target": 7.5 },
+            { "week": 5, "sets": 3, "reps": 15, "rpe_target": 7.5 },
+            { "week": 6, "sets": 2, "reps": 15, "rpe_target": 5, "deload": true }
+          ],
+          "progression_note": "Shoulder health accessory — light weight, focus on control, not load."
+        }
+      ]
+    }
+  ]
+}

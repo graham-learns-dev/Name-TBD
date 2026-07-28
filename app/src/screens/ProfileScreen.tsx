@@ -1,12 +1,16 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, spacing } from '../theme';
 import { Button, Card, Dim, Title } from '../components/ui';
 import { liftLabel } from '../lib/programs';
 import { useAppState } from '../state/AppState';
+import type { RootStackParamList } from '../navigation/types';
 
 export function ProfileScreen() {
   const { weightUnit, setWeightUnit, sets, reset } = useAppState();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content}>
@@ -35,6 +39,15 @@ export function ProfileScreen() {
             </Text>
           ))
         )}
+      </Card>
+
+      <Card>
+        <Text style={styles.label}>Help</Text>
+        <Button
+          label="How this app works"
+          kind="secondary"
+          onPress={() => navigation.navigate('HowItWorks', { from: 'profile' })}
+        />
       </Card>
 
       <Card>

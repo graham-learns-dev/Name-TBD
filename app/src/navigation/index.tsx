@@ -6,6 +6,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { colors } from '../theme';
 import { useAppState } from '../state/AppState';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
+import { HowItWorksScreen } from '../screens/HowItWorksScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { TodayScreen } from '../screens/TodayScreen';
 import { ProgramScreen } from '../screens/ProgramScreen';
@@ -62,6 +63,11 @@ export function RootNavigation() {
           headerTintColor: colors.text,
           headerShadowVisible: false,
         }}>
+        <Stack.Screen
+          name="HowItWorks"
+          component={HowItWorksScreen}
+          options={{ title: '', presentation: 'modal' }}
+        />
         {!onboarded ? (
           <>
             <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />

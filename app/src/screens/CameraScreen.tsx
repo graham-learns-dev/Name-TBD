@@ -252,6 +252,7 @@ export function CameraScreen({ navigation, route }: Props) {
       <View style={styles.controls}>
         {phase === 'buffering' && (
           <>
+            <Text style={styles.helpText}>No need to hit record — do your rep, then tap below.</Text>
             <Button label="Got it!" onPress={finish} />
             <Button label="Cancel" kind="ghost" onPress={cancel} style={styles.mt} />
           </>
@@ -266,6 +267,18 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   centered: { alignItems: 'center', justifyContent: 'center', padding: spacing(3) },
   mt: { marginTop: spacing(2) },
+  helpText: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: spacing(2),
+    paddingVertical: spacing(1),
+    borderRadius: 10,
+    marginBottom: spacing(1.5),
+    overflow: 'hidden',
+  },
   overlay: {
     position: 'absolute',
     top: 0,

@@ -16,7 +16,10 @@ export function WelcomeScreen({ navigation }: Props) {
         <Text style={styles.tagline}>Film your lifts. Fix your form. Share the proof.</Text>
       </View>
       <View style={styles.footer}>
-        <Button label="Get started" onPress={() => navigation.navigate('Onboarding')} />
+        <Button
+          label="Get started"
+          onPress={() => navigation.navigate('HowItWorks', { from: 'onboarding' })}
+        />
         <Dim>Sign-in (email / Apple / Google) arrives with the backend wiring.</Dim>
       </View>
     </View>
