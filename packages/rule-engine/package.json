@@ -1,0 +1,10 @@
+{
+  "name": "@formcheck/rule-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic form-check rules. Pure functions: (keypoint JSON, lift) -> flag JSON. No I/O, no deps.",
+  "scripts": {
+    "test": "node --test test/rules.test.ts"
+  }
+}

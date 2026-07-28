@@ -1,0 +1,17 @@
+{
+  "name": "formcheck",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Form-checking fitness app — monorepo",
+  "workspaces": [
+    "packages/*",
+    "backend"
+  ],
+  "scripts": {
+    "test": "npm run test --workspaces",
+    "lint": "echo 'linting not yet configured'"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

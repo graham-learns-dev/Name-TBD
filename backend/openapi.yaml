@@ -1,0 +1,150 @@
+# Logical V1 API per contracts/backend.md. Auth (signup/login/OAuth) is the Supabase
+# Auth SDK, not custom endpoints. Data paths are served by PostgREST under RLS; the two
+# /fn/* paths are edge functions running with the service role.
+openapi: 3.1.0
+info:
+  title: "[APP_NAME] API"
+  version: 0.1.0
+security:
+  - bearerAuth: []
+paths:
+  /programs:
+    get:
+      summary: List program templates (catalog, incl. paid ones for the paywall UI)
+      responses:
+        "200":
+          description: All templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Program" }
+  /user_programs:
+    post:
+      summary: Start a program (deactivates any currently active one client-side first)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [program_id]
+              properties:
+                program_id: { type: string }
+      responses:
+        "201": { description: Started }
+    patch:
+      summary: Advance week or deactivate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                current_week: { type: integer, minimum: 1 }
+                active: { type: boolean }
+      responses:
+        "204": { description: Updated }
+  /logged_sets/{set_id}:
+    put:
+      summary: Idempotent upsert of one logged set (offline queue replays safely)
+      parameters:
+        - name: set_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoggedSet" }
+      responses:
+        "204": { description: Stored }
+  /logged_sets:
+    get:
+      summary: Paged history fetch (prefill + history list)
+      parameters:
+        - name: since
+          in: query
+          schema: { type: string, format: date-time }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 100, maximum: 500 }
+      responses:
+        "200":
+          description: Sets, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LoggedSet" }
+  /entitlement:
+    get:
+      summary: Tier + watermark flag (UI passes watermark_free straight to Clip-Gen)
+      responses:
+        "200":
+          description: Current entitlement
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [tier, watermark_free]
+                properties:
+                  tier: { type: string, enum: [free, paid] }
+                  watermark_free: { type: boolean }
+  /fn/iap-validate:
+    post:
+      summary: Verify an App Store / Play receipt and upsert the subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [store, receipt]
+              properties:
+                store: { type: string, enum: [apple, google] }
+                receipt: { type: string }
+      responses:
+        "200":
+          description: Resulting entitlement (same shape as GET /entitlement)
+        "422": { description: Receipt invalid }
+  /fn/delete-account:
+    post:
+      summary: Full account deletion (App Store requirement). Cascades all user data.
+      responses:
+        "204": { description: Account and all data deleted }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    Program:
+      type: object
+      required: [program_id, name, definition, is_free, schema_version]
+      properties:
+        program_id: { type: string }
+        name: { type: string }
+        is_free: { type: boolean }
+        schema_version: { type: string }
+        definition:
+          description: Full template JSON per contracts/programs.md
+          type: object
+    LoggedSet:
+      type: object
+      required: [set_id, logged_at, lift, weight, weight_unit, reps]
+      properties:
+        set_id: { type: string, format: uuid }
+        logged_at: { type: string, format: date-time }
+        program_id: { type: string }
+        program_week: { type: integer }
+        lift: { type: string, enum: [squat, bench, deadlift] }
+        weight: { type: number, minimum: 0 }
+        weight_unit: { type: string, enum: [kg, lb] }
+        reps: { type: integer, minimum: 1, maximum: 100 }
+        rpe: { type: number, minimum: 1, maximum: 10 }
+        had_video: { type: boolean }
+        rep_quality_score: { type: number, minimum: 0, maximum: 1 }
+        flag_summary:
+          type: array
+          items: { type: string, description: "issue:severity, e.g. knee_valgus:medium" }

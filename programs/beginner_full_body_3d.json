@@ -1,0 +1,130 @@
+{
+  "schema_version": "1.0",
+  "program_id": "beginner_full_body_3d",
+  "name": "Full Body Foundations",
+  "description": "3 days/week, RPE-based. For lifters in their first year under the bar.",
+  "level": "beginner",
+  "days_per_week": 3,
+  "weeks": 4,
+  "deload_week": 4,
+  "is_free": true,
+  "sessions": [
+    {
+      "day": 1,
+      "name": "Full Body A",
+      "exercises": [
+        {
+          "lift": "squat",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 5, "rpe_target": 7 },
+            { "week": 2, "sets": 3, "reps": 5, "rpe_target": 7.5 },
+            { "week": 3, "sets": 4, "reps": 5, "rpe_target": 8 },
+            { "week": 4, "sets": 2, "reps": 5, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add 2.5 kg / 5 lb when all sets hit target RPE or lower."
+        },
+        {
+          "lift": "bench",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 6, "rpe_target": 7 },
+            { "week": 2, "sets": 3, "reps": 6, "rpe_target": 7.5 },
+            { "week": 3, "sets": 4, "reps": 6, "rpe_target": 8 },
+            { "week": 4, "sets": 2, "reps": 6, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add 2.5 kg / 5 lb when all sets hit target RPE or lower."
+        },
+        {
+          "lift": "one_arm_row",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 10, "rpe_target": 8 },
+            { "week": 2, "sets": 3, "reps": 10, "rpe_target": 8 },
+            { "week": 3, "sets": 3, "reps": 10, "rpe_target": 8 },
+            { "week": 4, "sets": 2, "reps": 10, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add reps to 12, then add weight and return to 10."
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "name": "Full Body B",
+      "exercises": [
+        {
+          "lift": "deadlift",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 2, "reps": 5, "rpe_target": 7 },
+            { "week": 2, "sets": 3, "reps": 5, "rpe_target": 7.5 },
+            { "week": 3, "sets": 3, "reps": 5, "rpe_target": 8 },
+            { "week": 4, "sets": 1, "reps": 5, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add 5 kg / 10 lb when all sets hit target RPE or lower."
+        },
+        {
+          "lift": "overhead_press",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 8, "rpe_target": 7.5 },
+            { "week": 2, "sets": 3, "reps": 8, "rpe_target": 8 },
+            { "week": 3, "sets": 3, "reps": 8, "rpe_target": 8 },
+            { "week": 4, "sets": 2, "reps": 8, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add 1.25 kg / 2.5 lb when all sets hit target RPE or lower."
+        },
+        {
+          "lift": "lat_pulldown",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 2, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 3, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 4, "sets": 2, "reps": 12, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add reps to 15, then add weight and return to 12."
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "name": "Full Body C",
+      "exercises": [
+        {
+          "lift": "squat",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 2, "reps": 8, "rpe_target": 6.5 },
+            { "week": 2, "sets": 2, "reps": 8, "rpe_target": 7 },
+            { "week": 3, "sets": 3, "reps": 8, "rpe_target": 7.5 },
+            { "week": 4, "sets": 2, "reps": 8, "rpe_target": 5.5, "deload": true }
+          ],
+          "progression_note": "Lighter volume day — stays 2+ RPE below Day 1 squat."
+        },
+        {
+          "lift": "bench",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 2, "reps": 10, "rpe_target": 6.5 },
+            { "week": 2, "sets": 2, "reps": 10, "rpe_target": 7 },
+            { "week": 3, "sets": 3, "reps": 10, "rpe_target": 7.5 },
+            { "week": 4, "sets": 2, "reps": 10, "rpe_target": 5.5, "deload": true }
+          ],
+          "progression_note": "Lighter volume day — stays 2+ RPE below Day 1 bench."
+        },
+        {
+          "lift": "romanian_deadlift",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 8, "rpe_target": 7 },
+            { "week": 2, "sets": 3, "reps": 8, "rpe_target": 7.5 },
+            { "week": 3, "sets": 3, "reps": 8, "rpe_target": 8 },
+            { "week": 4, "sets": 2, "reps": 8, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add 2.5 kg / 5 lb when all sets hit target RPE or lower."
+        }
+      ]
+    }
+  ]
+}

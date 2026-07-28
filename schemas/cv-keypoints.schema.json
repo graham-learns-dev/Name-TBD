@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "formcheck:cv-keypoints:1.0",
+  "title": "CV keypoint clip output (contracts/cv-keypoints.md)",
+  "type": "object",
+  "required": [
+    "schema_version", "clip_id", "lift", "prescribed_view", "view_check",
+    "source", "sampling", "bar_proxy", "frames"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^1\\." },
+    "clip_id": { "type": "string" },
+    "lift": { "enum": ["squat", "bench", "deadlift"] },
+    "prescribed_view": { "enum": ["front_45", "side"] },
+    "view_check": { "enum": ["pass", "warn", "fail"] },
+    "source": {
+      "type": "object",
+      "required": ["width_px", "height_px", "fps", "duration_ms"],
+      "properties": {
+        "width_px": { "type": "integer", "minimum": 1 },
+        "height_px": { "type": "integer", "minimum": 1 },
+        "fps": { "type": "number", "exclusiveMinimum": 0 },
+        "duration_ms": { "type": "integer", "minimum": 1000, "maximum": 15000 }
+      }
+    },
+    "sampling": {
+      "type": "object",
+      "required": ["sampled_fps", "frame_stride"],
+      "properties": {
+        "sampled_fps": { "type": "number", "minimum": 5 },
+        "frame_stride": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "bar_proxy": { "enum": ["wrist_midpoint", "shoulder_midpoint"] },
+    "frames": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["frame_index", "timestamp_ms", "keypoints_px", "keypoints_world", "bar_px"],
+        "properties": {
+          "frame_index": { "type": "integer", "minimum": 0 },
+          "timestamp_ms": { "type": "integer", "minimum": 0 },
+          "keypoints_px": {
+            "type": "object",
+            "propertyNames": { "$ref": "#/$defs/landmarkName" },
+            "additionalProperties": { "$ref": "#/$defs/point2d" }
+          },
+          "keypoints_world": {
+            "type": "object",
+            "propertyNames": { "$ref": "#/$defs/landmarkName" },
+            "additionalProperties": { "$ref": "#/$defs/point3d" }
+          },
+          "bar_px": { "$ref": "#/$defs/point2d" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "landmarkName": {
+      "enum": [
+        "left_shoulder", "right_shoulder", "left_elbow", "right_elbow",
+        "left_wrist", "right_wrist", "left_hip", "right_hip",
+        "left_knee", "right_knee", "left_ankle", "right_ankle",
+        "left_heel", "right_heel", "left_foot_index", "right_foot_index"
+      ]
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "point2d": {
+      "type": "object",
+      "required": ["x", "y", "confidence"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "confidence": { "$ref": "#/$defs/confidence" }
+      }
+    },
+    "point3d": {
+      "type": "object",
+      "required": ["x", "y", "z", "confidence"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "z": { "type": "number" },
+        "confidence": { "$ref": "#/$defs/confidence" }
+      }
+    }
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "schema_version": "1.0",
+  "program_id": "beginner_upper_lower",
+  "name": "Upper/Lower Split",
+  "description": "4 days/week, RPE-based. For beginners who can train four days consistently.",
+  "level": "beginner",
+  "days_per_week": 4,
+  "weeks": 4,
+  "deload_week": 4,
+  "is_free": true,
+  "sessions": [
+    {
+      "day": 1,
+      "name": "Upper A",
+      "exercises": [
+        {
+          "lift": "bench",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 5, "rpe_target": 7 },
+            { "week": 2, "sets": 4, "reps": 5, "rpe_target": 7.5 },
+            { "week": 3, "sets": 4, "reps": 5, "rpe_target": 8 },
+            { "week": 4, "sets": 2, "reps": 5, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add 2.5 kg / 5 lb when all sets hit target RPE or lower."
+        },
+        {
+          "lift": "barbell_row",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 8, "rpe_target": 7.5 },
+            { "week": 2, "sets": 3, "reps": 8, "rpe_target": 8 },
+            { "week": 3, "sets": 4, "reps": 8, "rpe_target": 8 },
+            { "week": 4, "sets": 2, "reps": 8, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add 2.5 kg / 5 lb when all sets hit target RPE or lower."
+        },
+        {
+          "lift": "overhead_press",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 2, "reps": 10, "rpe_target": 7.5 },
+            { "week": 2, "sets": 3, "reps": 10, "rpe_target": 8 },
+            { "week": 3, "sets": 3, "reps": 10, "rpe_target": 8 },
+            { "week": 4, "sets": 2, "reps": 10, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add 1.25 kg / 2.5 lb when all sets hit target RPE or lower."
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "name": "Lower A",
+      "exercises": [
+        {
+          "lift": "squat",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 5, "rpe_target": 7 },
+            { "week": 2, "sets": 4, "reps": 5, "rpe_target": 7.5 },
+            { "week": 3, "sets": 4, "reps": 5, "rpe_target": 8 },
+            { "week": 4, "sets": 2, "reps": 5, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add 2.5 kg / 5 lb when all sets hit target RPE or lower."
+        },
+        {
+          "lift": "romanian_deadlift",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 8, "rpe_target": 7 },
+            { "week": 2, "sets": 3, "reps": 8, "rpe_target": 7.5 },
+            { "week": 3, "sets": 3, "reps": 8, "rpe_target": 8 },
+            { "week": 4, "sets": 2, "reps": 8, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add 2.5 kg / 5 lb when all sets hit target RPE or lower."
+        },
+        {
+          "lift": "leg_press",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 2, "reps": 12, "rpe_target": 8 },
+            { "week": 2, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 3, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 4, "sets": 2, "reps": 12, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add reps to 15, then add weight and return to 12."
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "name": "Upper B",
+      "exercises": [
+        {
+          "lift": "bench",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 2, "reps": 8, "rpe_target": 6.5 },
+            { "week": 2, "sets": 3, "reps": 8, "rpe_target": 7 },
+            { "week": 3, "sets": 3, "reps": 8, "rpe_target": 7.5 },
+            { "week": 4, "sets": 2, "reps": 8, "rpe_target": 5.5, "deload": true }
+          ],
+          "progression_note": "Volume day — stays well below Upper A intensity."
+        },
+        {
+          "lift": "lat_pulldown",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 10, "rpe_target": 8 },
+            { "week": 2, "sets": 3, "reps": 10, "rpe_target": 8 },
+            { "week": 3, "sets": 4, "reps": 10, "rpe_target": 8 },
+            { "week": 4, "sets": 2, "reps": 10, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add reps to 12, then add weight and return to 10."
+        },
+        {
+          "lift": "incline_dumbbell_press",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 10, "rpe_target": 8 },
+            { "week": 2, "sets": 3, "reps": 10, "rpe_target": 8 },
+            { "week": 3, "sets": 3, "reps": 10, "rpe_target": 8 },
+            { "week": 4, "sets": 2, "reps": 10, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Move up a dumbbell step when all sets hit target RPE."
+        }
+      ]
+    },
+    {
+      "day": 4,
+      "name": "Lower B",
+      "exercises": [
+        {
+          "lift": "deadlift",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 2, "reps": 5, "rpe_target": 7 },
+            { "week": 2, "sets": 3, "reps": 5, "rpe_target": 7.5 },
+            { "week": 3, "sets": 3, "reps": 5, "rpe_target": 8 },
+            { "week": 4, "sets": 1, "reps": 5, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add 5 kg / 10 lb when all sets hit target RPE or lower."
+        },
+        {
+          "lift": "squat",
+          "trackable": true,
+          "prescriptions": [
+            { "week": 1, "sets": 2, "reps": 8, "rpe_target": 6.5 },
+            { "week": 2, "sets": 2, "reps": 8, "rpe_target": 7 },
+            { "week": 3, "sets": 3, "reps": 8, "rpe_target": 7.5 },
+            { "week": 4, "sets": 2, "reps": 8, "rpe_target": 5.5, "deload": true }
+          ],
+          "progression_note": "Volume day — stays well below Lower A intensity."
+        },
+        {
+          "lift": "leg_curl",
+          "trackable": false,
+          "prescriptions": [
+            { "week": 1, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 2, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 3, "sets": 3, "reps": 12, "rpe_target": 8 },
+            { "week": 4, "sets": 2, "reps": 12, "rpe_target": 6, "deload": true }
+          ],
+          "progression_note": "Add reps to 15, then add weight and return to 12."
+        }
+      ]
+    }
+  ]
+}
