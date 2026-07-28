@@ -130,11 +130,49 @@ cross-review before any implementation started.
    an independent still frame) but Clip-Gen will need real video concatenation later,
    which doesn't exist yet.
 
-   **Not yet done:** on-device verification of the rolling buffer specifically — does
-   it feel smooth, does back-to-back segment recording actually work without gaps or
-   errors on Graham's phone. This is the very next thing to confirm. Also still
-   pending: the 6 golden fixture clips, and eventually the native MediaPipe swap
-   once/if an Apple Developer account is in the picture.
+   **Round 2 on-device test (2026-07-28) confirmed the flagged risk, twice over.**
+   First symptom: the "Got it!" button looked inert after a squat, with zero feedback.
+   Root cause #1 — the capture loop was gated on `onCameraReady` firing, an unverified
+   signal; if it doesn't fire promptly on Graham's hardware, the loop never starts at
+   all and the buffer silently stays empty forever. Fixed: loop now starts on
+   permission-granted alone, with a live status line ("Starting camera…" / "Getting
+   ready…" / "Buffering — X.Xs ready") so the actual state is visible instead of an
+   ambiguous disabled button.
+
+   With that fixed, round 2b surfaced the real headline finding: after tapping "Got
+   it!", the screen hung on "Wrapping up…" for **2-3 minutes** — `recordAsync()` never
+   resolved at all, not even honoring its own `maxDuration: 3` cap. This is exactly
+   the "one real unverified risk" flagged before ever testing this design (back-to-
+   back `recordAsync()` calls on real hardware) — now confirmed, not hypothetical.
+
+   **Fix: every `recordAsync()` call now races against a hard timeout**
+   (`SEGMENT_TIMEOUT_MS`, maxDuration + 3s grace), for every segment, not just the
+   final one — if the native call doesn't resolve in time, that attempt is treated as
+   failed and the loop retries (or gives up gracefully after 5 in a row). A second,
+   looser timeout (`FINISH_TIMEOUT_MS`) guards the "Got it!" → next-screen transition
+   specifically as defense in depth. A `settledRef` guard ensures only one of these
+   paths ever actually navigates, in case both fire. **Nothing in this screen can hang
+   indefinitely anymore, regardless of what the camera does** — worst case is now a
+   bounded ~8s per attempt, not an unbounded wait.
+
+   Also fixed in the same pass: a genuinely broken `retry()` (was calling `setState`
+   with an unchanged value hoping to force a re-render — React just no-ops that;
+   replaced with an `attempt` counter in the effect's dependency array).
+
+   **Contingency if this keeps happening:** if `recordAsync()` times out on *every*
+   attempt even with retries (buffer never fills, always lands in the error state),
+   that points to something more fundamentally wrong with rapid repeated recording
+   calls on this device/OS combination — not something more client-side patching can
+   fix. Fallback plan: the pre-record-countdown design (single `recordAsync()` call
+   per attempt, built and verified in round 1, superseded before shipping — see above)
+   is far less likely to hit whatever native state this triggers, since it never calls
+   `recordAsync()` back-to-back. Worth resurrecting if round 3 still fails.
+
+   **Not yet done:** confirmation that the timeout fix actually resolves the hang on
+   Graham's phone (does the buffer now visibly climb, does "Got it!" resolve within
+   ~8s even in the worst case) — the very next thing to check. Also still pending: the
+   6 golden fixture clips, and eventually the native MediaPipe swap once/if an Apple
+   Developer account is in the picture.
 2. Rule engine as pure functions — **DONE, first pass.**
    [packages/rule-engine/](packages/rule-engine/) — zero-dependency TypeScript, all five
    v1 rules + rep segmentation + severity/scoring, 13 tests green (`npm test`, Node ≥ 23).

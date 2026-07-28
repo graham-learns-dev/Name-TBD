@@ -29,10 +29,20 @@ const GUIDE: Record<string, { instruction: string }> = {
 // (not true frame-buffer) approach.
 const SEGMENT_S = 3;
 const MAX_SEGMENTS = 5; // ~15s rolling window
-// A segment can fail while the camera is still warming up (e.g. called just before
-// it's truly ready). Round 1 on-device test showed the buffer silently staying empty
-// forever with no feedback — this retries instead of giving up after one bad attempt.
+// A segment can fail while the camera is still warming up. Round 1 showed the buffer
+// silently staying empty forever — this retries instead of giving up after one bad go.
 const MAX_CONSECUTIVE_FAILURES = 5;
+// Round 2 (2026-07-28) confirmed the real risk flagged in the docs: recordAsync()
+// hung for 2+ minutes on Graham's phone, not honoring its own maxDuration at all —
+// a native-module issue, not something client code can prevent, only bound. Every
+// recordAsync() call now races against this timeout; if it fires, we treat that
+// attempt as failed and move on rather than hang indefinitely on a promise that may
+// never settle.
+const SEGMENT_TIMEOUT_MS = SEGMENT_S * 1000 + 3000;
+// Extra safety net on top of the per-segment timeout above, in case some other path
+// slips past it — the "Got it!" -> next screen transition should never take longer
+// than this no matter what the camera does.
+const FINISH_TIMEOUT_MS = SEGMENT_TIMEOUT_MS + 2000;
 
 export function CameraScreen({ navigation, route }: Props) {
   const { set } = route.params;
@@ -48,8 +58,23 @@ export function CameraScreen({ navigation, route }: Props) {
   const segmentsRef = useRef<Segment[]>([]);
   const finishingRef = useRef(false);
   const mountedRef = useRef(true);
+  // Guards against the per-segment timeout path and the finish-timeout path both
+  // trying to navigate/error at once.
+  const settledRef = useRef(false);
 
   const guide = GUIDE[set.lift] ?? GUIDE.squat;
+
+  const settle = () => {
+    if (settledRef.current || !mountedRef.current) {
+      return;
+    }
+    settledRef.current = true;
+    if (segmentsRef.current.length === 0) {
+      setPhase('error');
+    } else {
+      navigation.navigate('Results', { set, segments: segmentsRef.current });
+    }
+  };
 
   useEffect(() => {
     // Gated on permission only, NOT on the onCameraReady callback — that callback's
@@ -62,6 +87,7 @@ export function CameraScreen({ navigation, route }: Props) {
     }
     mountedRef.current = true;
     finishingRef.current = false;
+    settledRef.current = false;
     segmentsRef.current = [];
     setBufferedMs(0);
     setPhase('buffering');
@@ -72,15 +98,23 @@ export function CameraScreen({ navigation, route }: Props) {
       }
       const segStart = Date.now();
       try {
-        const video = await camRef.current.recordAsync({ maxDuration: SEGMENT_S });
-        const durationMs = Date.now() - segStart;
-        // A near-zero-length segment (e.g. stopRecording landed right as this one
-        // started) isn't useful to sample from — drop it rather than confuse the
-        // timeline math with a ~0-duration entry.
-        if (!video?.uri || durationMs < 200) {
+        const outcome = await Promise.race([
+          camRef.current.recordAsync({ maxDuration: SEGMENT_S }),
+          new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), SEGMENT_TIMEOUT_MS)),
+        ]);
+        if (outcome === 'timeout') {
+          // recordAsync() didn't resolve even past its own maxDuration plus a grace
+          // period. Nudge stopRecording() defensively (harmless no-op if nothing's
+          // actually in progress) and treat this attempt as failed so the loop can
+          // retry instead of hanging indefinitely on a promise that may never settle.
+          camRef.current?.stopRecording();
           return null;
         }
-        return { uri: video.uri, durationMs };
+        const durationMs = Date.now() - segStart;
+        if (!outcome?.uri || durationMs < 200) {
+          return null;
+        }
+        return { uri: outcome.uri, durationMs };
       } catch {
         return null;
       }
@@ -128,11 +162,7 @@ export function CameraScreen({ navigation, route }: Props) {
       if (!mountedRef.current) {
         return;
       }
-      if (segmentsRef.current.length === 0) {
-        setPhase('error');
-        return;
-      }
-      navigation.navigate('Results', { set, segments: segmentsRef.current });
+      settle();
     }
 
     loop();
@@ -164,10 +194,15 @@ export function CameraScreen({ navigation, route }: Props) {
     finishingRef.current = true;
     setPhase('finishing');
     camRef.current?.stopRecording();
+    // Defense in depth on top of the per-segment timeout: the "Got it!" -> next
+    // screen transition should never take longer than this no matter what the
+    // camera does.
+    setTimeout(settle, FINISH_TIMEOUT_MS);
   };
 
   const cancel = () => {
     finishingRef.current = true;
+    settledRef.current = true; // prevent any in-flight timeout from firing settle() after we've already left
     camRef.current?.stopRecording();
     navigation.goBack();
   };
