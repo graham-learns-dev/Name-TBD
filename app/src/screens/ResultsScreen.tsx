@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { evaluate } from '@formcheck/rule-engine';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { evaluate, type Lift, type RuleResult } from '@formcheck/rule-engine';
 import { colors, spacing } from '../theme';
 import { Button, Card, Dim, Title } from '../components/ui';
 import { nextDemoClip } from '../lib/demoClip';
+import { extractClipKeypoints } from '../lib/poseEstimation';
 import { liftLabel } from '../lib/programs';
 import { useAppState } from '../state/AppState';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -18,17 +19,81 @@ const SEVERITY_COLOR: Record<string, string> = {
   info: colors.textDim,
 };
 
+type Stage =
+  | { kind: 'loading' }
+  | { kind: 'ready'; result: RuleResult; isDemo: boolean; demoLabel?: string }
+  | { kind: 'error'; message: string };
+
 export function ResultsScreen({ navigation, route }: Props) {
-  const { set } = route.params;
+  const { set, videoUri, durationMs } = route.params;
   const { logSet } = useAppState();
+  const [stage, setStage] = useState<Stage>({ kind: 'loading' });
 
-  // Runs the real rule engine on a bundled demo clip (camera lands with the device
-  // build). Scenario rotates each visit so every outcome is visible.
-  const { label, result } = useMemo(() => {
+  useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      if (!videoUri) {
+        // Defensive fallback — Results is only ever reached via Camera today, which
+        // always supplies a videoUri when recording succeeds.
+        const demo = nextDemoClip();
+        if (!cancelled) {
+          setStage({ kind: 'ready', result: evaluate(demo.clip), isDemo: true, demoLabel: demo.label });
+        }
+        return;
+      }
+      try {
+        const clip = await extractClipKeypoints(videoUri, set.lift as Lift, durationMs ?? 5000);
+        if (!cancelled) {
+          setStage({ kind: 'ready', result: evaluate(clip), isDemo: false });
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setStage({
+            kind: 'error',
+            message: e instanceof Error ? e.message : 'Analysis failed unexpectedly.',
+          });
+        }
+      }
+    }
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [videoUri, durationMs, set.lift]);
+
+  const useDemoInstead = () => {
     const demo = nextDemoClip();
-    return { label: demo.label, result: evaluate(demo.clip) };
-  }, []);
+    setStage({ kind: 'ready', result: evaluate(demo.clip), isDemo: true, demoLabel: demo.label });
+  };
 
+  if (stage.kind === 'loading') {
+    return (
+      <View style={[styles.root, styles.centered]}>
+        <ActivityIndicator color={colors.accent} size="large" />
+        <Dim style={styles.mt}>
+          Analyzing your rep on-device — the pose model can take a while to warm up the
+          first time.
+        </Dim>
+      </View>
+    );
+  }
+
+  if (stage.kind === 'error') {
+    return (
+      <View style={[styles.root, styles.centered]}>
+        <Text style={styles.errorTitle}>Couldn't analyze this clip</Text>
+        <Dim style={styles.mt}>{stage.message}</Dim>
+        <Button label="Try demo data instead" onPress={useDemoInstead} style={styles.mt} />
+        {videoUri && (
+          <Button label="Retake" kind="secondary" onPress={() => navigation.goBack()} style={styles.mt} />
+        )}
+      </View>
+    );
+  }
+
+  const { result, isDemo, demoLabel } = stage;
   const score = result.rep_quality_score;
   const scoreColor =
     score == null ? colors.textDim : score >= 0.85 ? colors.good : score >= 0.6 ? colors.warning : colors.fault;
@@ -41,7 +106,7 @@ export function ResultsScreen({ navigation, route }: Props) {
         .filter((f) => f.severity !== 'info')
         .map((f) => `${f.issue}:${f.severity}`),
     });
-    navigation.goBack();
+    navigation.popToTop();
   };
 
   return (
@@ -49,8 +114,21 @@ export function ResultsScreen({ navigation, route }: Props) {
       <Title>Form check</Title>
       <Dim>
         {liftLabel(set.lift)} · {set.weight} {set.weight_unit} × {set.reps}
-        {set.rpe != null ? ` @ RPE ${set.rpe}` : ''} · demo scenario: {label}
+        {set.rpe != null ? ` @ RPE ${set.rpe}` : ''}
       </Dim>
+      {isDemo && (
+        <Dim>
+          {videoUri
+            ? `Couldn't get a clean read on this clip, so this is bundled demo data (scenario: ${demoLabel}) — not your recording.`
+            : `Demo data (scenario: ${demoLabel}).`}
+        </Dim>
+      )}
+      {!isDemo && result.rep == null && (
+        <Dim>
+          Ran real pose analysis on your recording, but couldn't find a clear rep in it —
+          try filming with your whole body in frame, matching the on-screen guide.
+        </Dim>
+      )}
 
       <View style={styles.scoreWrap}>
         <View style={[styles.scoreRing, { borderColor: scoreColor }]}>
@@ -84,7 +162,10 @@ export function ResultsScreen({ navigation, route }: Props) {
       )}
 
       <Button label="Save to history" onPress={saveAndClose} />
-      <Button label="Share clip — arrives with clip-gen" kind="secondary" onPress={() => {}} />
+      {videoUri && (
+        <Button label="Retake" kind="secondary" onPress={() => navigation.goBack()} />
+      )}
+      <Button label="Share clip — arrives with clip-gen" kind="ghost" onPress={() => {}} />
       <Dim>
         The annotated, watermarked clip and share sheet land with the clip-generation
         workstream (native video composition).
@@ -95,6 +176,9 @@ export function ResultsScreen({ navigation, route }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
+  centered: { alignItems: 'center', justifyContent: 'center', padding: spacing(3) },
+  mt: { marginTop: spacing(2) },
+  errorTitle: { color: colors.fault, fontSize: 18, fontWeight: '700' },
   content: { padding: spacing(3), gap: spacing(2) },
   scoreWrap: { alignItems: 'center', gap: spacing(1), marginVertical: spacing(2) },
   scoreRing: {

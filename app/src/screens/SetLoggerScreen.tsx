@@ -40,7 +40,7 @@ export function SetLoggerScreen({ navigation, route }: Props) {
       flag_summary: [],
     };
     if (withFormCheck) {
-      navigation.replace('Results', { set });
+      navigation.replace('Camera', { set });
     } else {
       logSet(set);
       navigation.goBack();
@@ -87,12 +87,12 @@ export function SetLoggerScreen({ navigation, route }: Props) {
 
       <Button label="Save set" onPress={() => save(false)} />
       {trackable && (
-        <Button label="Save + form check (demo clip)" kind="secondary" onPress={() => save(true)} />
+        <Button label="Save + film form check" kind="secondary" onPress={() => save(true)} />
       )}
       {trackable && (
         <Dim>
-          Camera capture arrives with the device build — for now the form check runs on a
-          bundled demo rep so you can see the full loop.
+          Your rep is filmed and analyzed entirely on-device — nothing is uploaded.
+          First analysis may be slow while the pose model loads.
         </Dim>
       )}
     </ScrollView>

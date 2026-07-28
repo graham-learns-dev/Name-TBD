@@ -6,11 +6,38 @@
 
 ## Stack
 
-- MediaPipe Pose Landmarker (Tasks API), `pose_landmarker_full` model, on-device.
-- React Native binding: `react-native-mediapipe` (or a thin native module wrapping the
-  iOS/Android Tasks SDKs if the RN wrapper underperforms — benchmark first, see notes).
-- Target: process a 5–10 s clip at **10 FPS sampled** (not every frame). 30 FPS source →
-  sample every 3rd frame. Keeps analysis under ~3 s on a mid-range phone.
+**Target (V1 final):** MediaPipe Pose Landmarker (Tasks API), `pose_landmarker_full`
+model, on-device, via a native module. Requires a custom EAS development build (Expo
+Go can't load custom native code).
+
+**Interim implementation (shipped 2026-07-28, see SUPERVISOR-NOTES.md):**
+BlazePose running through TensorFlow.js's `tfjs` runtime
+(`@tensorflow-models/pose-detection`, `SupportedModels.BlazePose`, `runtime: 'tfjs'`,
+`modelType: 'full'`). Chosen because it runs inside **Expo Go** — official `expo-gl`
+module only, no custom native code — so Graham can test on his iPhone today without an
+Apple Developer account or EAS builds. BlazePose is the *same model* MediaPipe Pose
+uses internally, so its 33-landmark output (including `keypoints3D`, hip-centered and
+roughly metric) maps onto this exact schema with no rule-engine changes. Swapping to
+native MediaPipe later is a backend swap behind this same contract, not a rewrite.
+Implementation: `app/src/lib/poseModel.ts` (detector bootstrap), `app/src/lib/
+poseMapping.ts` (pure, unit-tested mapping), `app/src/lib/poseEstimation.ts` (I/O:
+frame extraction + inference).
+
+- Frame extraction: **still frames via `expo-video-thumbnails`**, not a real frame
+  decoder — `getThumbnailAsync(uri, { time })` at N evenly-spaced timestamps.
+- Sampling: **8 evenly-spaced frames per clip**, not 10 FPS. Each BlazePose-tfjs
+  inference on a phone GPU via WebGL takes on the order of hundreds of ms to ~1s with
+  no native acceleration; sampling densely would make analysis too slow. This is a
+  real, deliberate accuracy tradeoff (coarser rep segmentation, less precise
+  worst-frame detection) versus the target native pipeline — revisit the count once
+  Graham reports actual on-device timing.
+- `view_check` heuristic is simplified: `pass`/`warn`/`fail` from the fraction of
+  sampled frames with any detected pose at all (≥80% / 50–80% / <50%), not the
+  shoulder-width-ratio check originally specified — that needs calibration data this
+  interim pipeline doesn't have yet.
+- `frame_index` is the sample index (0..7), not an index into the source video's frame
+  sequence — there's no full frame decode in this pipeline. `timestamp_ms` remains the
+  authoritative field for any future consumer, per the existing note below.
 
 ## Coordinate spaces — the part everyone gets wrong
 
@@ -93,6 +120,12 @@ On `fail`, UI shows "re-film from the side" instead of running rules on garbage.
 
 ## Deliverables checklist
 
+- [x] Schema validator (JSON Schema file) checked into repo — [schemas/cv-keypoints.schema.json](../../schemas/cv-keypoints.schema.json)
+- [x] Interim producer implementation (BlazePose-tfjs) shipped and wired into the app,
+      unit-tested end-to-end through `evaluate()` — see `app/__tests__/poseMapping.test.ts`
+- [ ] On-device timing benchmark on Graham's iPhone (interim BlazePose-tfjs pipeline —
+      not the ≥5 FPS native-module target, just "is 8-frame analysis fast enough to be
+      usable")
 - [ ] Native module benchmark: ≥5 FPS effective on iPhone 12 / Pixel 6 class hardware
-- [ ] Schema validator (JSON Schema file) checked into repo, CI-enforced on fixtures
+      (target pipeline, needs EAS dev client — deferred, see SUPERVISOR-NOTES.md)
 - [ ] 6 fixture clips (2 per lift: one clean, one with a known fault) with golden keypoint output

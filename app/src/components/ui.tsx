@@ -37,8 +37,8 @@ export function Title({ children }: { children: React.ReactNode }) {
   return <Text style={styles.title}>{children}</Text>;
 }
 
-export function Dim({ children }: { children: React.ReactNode }) {
-  return <Text style={styles.dim}>{children}</Text>;
+export function Dim({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
+  return <Text style={[styles.dim, style]}>{children}</Text>;
 }
 
 const styles = StyleSheet.create({

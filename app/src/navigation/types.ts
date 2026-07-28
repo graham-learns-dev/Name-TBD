@@ -10,5 +10,6 @@ export type RootStackParamList = {
     targetReps: number;
     targetRpe?: number;
   };
-  Results: { set: LoggedSet };
+  Camera: { set: LoggedSet };
+  Results: { set: LoggedSet; videoUri?: string; durationMs?: number };
 };

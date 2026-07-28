@@ -3,7 +3,16 @@ import { CONFIG } from './config.ts';
 import { segmentRep } from './segmentation.ts';
 import { benchRules, deadliftRules, squatRules, type LiftRuleOutput } from './rules.ts';
 
-export type { ClipKeypoints, RuleResult, Flag } from './types.ts';
+export type {
+  ClipKeypoints,
+  RuleResult,
+  Flag,
+  Frame,
+  Point2D,
+  Point3D,
+  Lift,
+  View,
+} from './types.ts';
 export { CONFIG } from './config.ts';
 
 const SCHEMA_VERSION = '1.0';

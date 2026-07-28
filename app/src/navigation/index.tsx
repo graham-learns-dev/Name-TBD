@@ -11,6 +11,7 @@ import { TodayScreen } from '../screens/TodayScreen';
 import { ProgramScreen } from '../screens/ProgramScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SetLoggerScreen } from '../screens/SetLoggerScreen';
+import { CameraScreen } from '../screens/CameraScreen';
 import { ResultsScreen } from '../screens/ResultsScreen';
 import type { RootStackParamList } from './types';
 
@@ -73,6 +74,11 @@ export function RootNavigation() {
               name="SetLogger"
               component={SetLoggerScreen}
               options={{ presentation: 'modal', title: 'Log set' }}
+            />
+            <Stack.Screen
+              name="Camera"
+              component={CameraScreen}
+              options={{ presentation: 'fullScreenModal', headerShown: false }}
             />
             <Stack.Screen
               name="Results"
