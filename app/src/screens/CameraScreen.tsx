@@ -26,10 +26,13 @@ const GUIDE: Record<string, { instruction: string }> = {
 // fixed schedule; this is strictly better — take however long you need, tap "Got it!"
 // whenever the rep is done, and we use whatever's still in the last ~15s of buffer.
 // See docs/contracts/cv-keypoints.md and SUPERVISOR-NOTES.md for the segment-file
-// (not true frame-buffer) approach and its one real unverified risk: back-to-back
-// recordAsync reliability on real hardware, which needs Graham's phone to confirm.
+// (not true frame-buffer) approach.
 const SEGMENT_S = 3;
 const MAX_SEGMENTS = 5; // ~15s rolling window
+// A segment can fail while the camera is still warming up (e.g. called just before
+// it's truly ready). Round 1 on-device test showed the buffer silently staying empty
+// forever with no feedback — this retries instead of giving up after one bad attempt.
+const MAX_CONSECUTIVE_FAILURES = 5;
 
 export function CameraScreen({ navigation, route }: Props) {
   const { set } = route.params;
@@ -38,6 +41,9 @@ export function CameraScreen({ navigation, route }: Props) {
   const [cameraReady, setCameraReady] = useState(false);
   const [phase, setPhase] = useState<'buffering' | 'finishing' | 'error'>('buffering');
   const [bufferedMs, setBufferedMs] = useState(0);
+  // Bumped on retry to force the capture effect to re-run — it depends on
+  // permission.granted alone, which doesn't change between attempts.
+  const [attempt, setAttempt] = useState(0);
 
   const segmentsRef = useRef<Segment[]>([]);
   const finishingRef = useRef(false);
@@ -46,7 +52,12 @@ export function CameraScreen({ navigation, route }: Props) {
   const guide = GUIDE[set.lift] ?? GUIDE.squat;
 
   useEffect(() => {
-    if (!permission?.granted || !cameraReady) {
+    // Gated on permission only, NOT on the onCameraReady callback — that callback's
+    // reliability on real hardware is unverified, and gating a required action on an
+    // unverified signal is exactly what left Graham staring at a dead button with no
+    // feedback on round 1. recordAsync() failing before the camera is truly ready is
+    // now just an ordinary retry case below, not a hard dependency.
+    if (!permission?.granted) {
       return;
     }
     mountedRef.current = true;
@@ -76,17 +87,21 @@ export function CameraScreen({ navigation, route }: Props) {
     }
 
     async function loop() {
+      let consecutiveFailures = 0;
       while (!finishingRef.current) {
         const result = await recordOneSegment();
         if (!mountedRef.current) {
           return;
         }
         if (!result) {
-          // Camera couldn't produce a segment. If we already have buffer, better to
-          // work with what we have than dead-end the user; if we have nothing yet,
-          // this is a real failure.
-          break;
+          consecutiveFailures++;
+          if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+            break;
+          }
+          continue;
         }
+        consecutiveFailures = 0;
+
         const prev = segmentsRef.current;
         const startMs =
           prev.length === 0 ? 0 : prev[prev.length - 1].startMs + prev[prev.length - 1].durationMs;
@@ -127,7 +142,7 @@ export function CameraScreen({ navigation, route }: Props) {
       finishingRef.current = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [permission?.granted, cameraReady]);
+  }, [permission?.granted, attempt]);
 
   if (!permission) {
     return <View style={styles.root} />;
@@ -158,12 +173,8 @@ export function CameraScreen({ navigation, route }: Props) {
   };
 
   const retry = () => {
-    segmentsRef.current = [];
-    setBufferedMs(0);
     setPhase('buffering');
-    // Re-trigger the effect by toggling cameraReady off/on next tick.
-    setCameraReady(false);
-    setTimeout(() => setCameraReady(true), 0);
+    setAttempt((a) => a + 1); // forces the capture effect to re-run and start a fresh loop
   };
 
   return (
@@ -182,10 +193,16 @@ export function CameraScreen({ navigation, route }: Props) {
         <Text style={styles.instruction}>{guide.instruction}</Text>
       </View>
 
-      {phase === 'buffering' && cameraReady && (
+      {phase === 'buffering' && (
         <View style={styles.recIndicator} pointerEvents="none">
-          <View style={styles.recDot} />
-          <Text style={styles.recText}>Ready — do your rep whenever</Text>
+          <View style={[styles.recDot, bufferedMs > 0 && styles.recDotActive]} />
+          <Text style={styles.recText}>
+            {!cameraReady && bufferedMs === 0
+              ? 'Starting camera…'
+              : bufferedMs === 0
+                ? 'Getting ready…'
+                : `Buffering — ${(bufferedMs / 1000).toFixed(1)}s ready`}
+          </Text>
         </View>
       )}
 
@@ -200,7 +217,7 @@ export function CameraScreen({ navigation, route }: Props) {
       <View style={styles.controls}>
         {phase === 'buffering' && (
           <>
-            <Button label="Got it!" onPress={finish} disabled={bufferedMs < 500} />
+            <Button label="Got it!" onPress={finish} />
             <Button label="Cancel" kind="ghost" onPress={cancel} style={styles.mt} />
           </>
         )}
@@ -253,7 +270,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing(1),
   },
-  recDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.fault },
+  recDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.textDim },
+  recDotActive: { backgroundColor: colors.fault },
   recText: {
     color: colors.text,
     fontSize: 13,
