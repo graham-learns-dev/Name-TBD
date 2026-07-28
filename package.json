@@ -2,16 +2,12 @@
   "name": "formcheck",
   "version": "0.1.0",
   "private": true,
-  "description": "Form-checking fitness app — monorepo",
+  "description": "Form-checking fitness app — monorepo. The RN app lives in app/ (own node_modules, not a workspace).",
   "workspaces": [
-    "packages/*",
-    "backend"
+    "packages/*"
   ],
   "scripts": {
     "test": "npm run test --workspaces",
-    "lint": "echo 'linting not yet configured'"
-  },
-  "devDependencies": {
-    "typescript": "^5.3.3"
+    "validate:programs": "node programs/validate.mjs"
   }
 }

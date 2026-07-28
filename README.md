@@ -6,27 +6,53 @@ A mobile app combining free form-checking (AI video analysis of powerlifting for
 
 ```
 formcheck/
+├── app/                — Expo (React Native) app, own node_modules
 ├── docs/               — contract pack + supervisor notes
 ├── packages/
-│   ├── mobile/         — React Native app (iOS/Android)
 │   └── rule-engine/    — deterministic form-check rules (TypeScript, pure functions)
 ├── backend/            — Supabase SQL + edge functions
 ├── programs/           — training program templates (JSON)
 ├── schemas/            — JSON Schema for cross-service contracts
-└── package.json        — root monorepo config
+└── package.json        — root config (workspaces: packages/*)
 ```
 
 ## Quick start
 
-Install dependencies:
+Rule-engine tests (no install needed, Node ≥ 23):
 ```bash
-npm install
-```
-
-Run tests:
-```bash
+cd packages/rule-engine
 npm test
 ```
+
+App (install once, then test / run):
+```bash
+cd app
+npm install
+npm test
+```
+
+## Running the app
+
+**No Mac required for day-to-day development.** The app runs via Expo:
+
+```bash
+cd app
+npx expo start
+```
+
+Scan the printed QR code with the **Expo Go** app (free, App Store / Play Store) on
+your phone. Live reload — code changes appear on the phone in seconds.
+
+**Path to the App Store without owning a Mac:** [EAS Build](https://docs.expo.dev/build/introduction/)
+runs the iOS build on Expo's cloud infrastructure and can submit straight to
+TestFlight/App Store. A physical Mac becomes optional, useful for full native-code
+control once we're past MVP, not a hard requirement.
+
+**Known limitation:** on-device pose estimation (MediaPipe) needs a custom native
+module, which Expo Go can't load. When that workstream lands, testing moves from
+Expo Go to an EAS-built "development client" (still no Mac needed — EAS builds it in
+the cloud) or a Mac if/when Graham has one. Everything else — logging, programs,
+navigation, and the rule engine itself — works fully in Expo Go today.
 
 ## Development
 

@@ -58,8 +58,8 @@ cross-review before any implementation started.
 
 ## Build order (dependency-driven) — status 2026-07-28
 
-1. CV fixtures + keypoint extraction benchmark — **next up** (needs device + RN scaffold;
-   resolves the remaining MediaPipe escalation)
+1. CV fixtures + keypoint extraction benchmark — **next up** (RN scaffold now exists;
+   still needs a physical device; resolves the remaining MediaPipe escalation)
 2. Rule engine as pure functions — **DONE, first pass.**
    [packages/rule-engine/](packages/rule-engine/) — zero-dependency TypeScript, all five
    v1 rules + rep segmentation + severity/scoring, 13 tests green (`npm test`, Node ≥ 23).
@@ -74,7 +74,60 @@ cross-review before any implementation started.
    `seed/generate_seed_sql.mjs` (validates templates, emits idempotent seed SQL —
    `programs_seed.sql` generated). Remaining: real IAP verification + a Supabase project
    to apply it to.
-5. UI shell + SetLogger — not started, wires modules as they land
+5. UI shell + SetLogger — **DONE, first pass; rebuilt on Expo (2026-07-28).**
+   [/app](../app/) started as a bare React Native CLI project, then was **converted to
+   an Expo (SDK 57) app** the same day — Graham has no Mac and no Android Studio yet,
+   and Expo Go lets him run the app on his iPhone directly (scan a QR code) with zero
+   native toolchain. Same screens, same logic; only the scaffolding changed.
+   - Full v1 navigation: Welcome → Onboarding (program pick) → tabs (Today / Program /
+     Profile) with SetLogger + Results as modals.
+   - SetLogger follows the ≤4-tap contract: weight steppers, rep steppers, RPE chips,
+     prefill from last set of the same lift.
+   - **The real rule engine runs in-app**: Results screen calls `evaluate()` from
+     `@formcheck/rule-engine` (linked via file: dep). Camera isn't built yet, so it runs
+     on bundled demo clips that rotate through clean / valgus / high-squat scenarios —
+     the full log → analyze → results → history loop works end to end, live on-device
+     via Expo Go.
+   - Program templates bundle straight from /programs JSONs (single source of truth).
+   - 7 app-level jest tests green (`jest-expo` preset); `tsc --noEmit` clean.
+   - Not yet wired: camera/CV (needs a custom native module — see below), clip-gen,
+     Supabase auth + sync (state is in-memory; shapes already match the contracts so the
+     swap is additive).
+
+   **Path to production without a Mac:** EAS Build (Expo's cloud build service) can
+   produce App Store / TestFlight binaries, including ones with custom native code,
+   entirely from Windows — no Mac required for the whole v1 timeline. A Mac becomes
+   genuinely useful once we want full local control over native iOS debugging; it is
+   not a blocker. Graham's plan: ship on EAS, buy a Mac later when it makes sense.
+
+   **Consequence for the CV workstream:** Expo Go itself can't load a custom MediaPipe
+   native module — that requires an EAS "development build" instead (still built in
+   Expo's cloud, still no Mac needed, just a slower iterate loop than Expo Go's instant
+   QR-code reload). Noting this now so it isn't a surprise when CV work starts.
+
+   **Pinned to SDK 54, not latest (2026-07-28).** Scaffolded first on SDK 57, but
+   Graham's installed Expo Go only supports SDK 54 (Expo Go tracks one SDK at a time;
+   App Store listing lagging the newest SDK is normal, not a broken install). Downgraded
+   via `npx expo install expo@^54.0.0` + `expo install --fix` + clean reinstall
+   (react 19.1.0, react-native 0.81.5, expo-camera ~17.0.10, jest-expo ~54.0.17, etc.).
+   `npx expo-doctor`: 18/18 checks pass. Tests and tsc still green post-downgrade.
+   Revisit the SDK version whenever Expo Go's supported SDK moves — check via the
+   Profile tab in the app before assuming "latest" will work.
+
+   **Missing monorepo Metro config caught by the first real bundle (2026-07-28).** The
+   clean reinstall during the SDK downgrade was fine, but this Expo project never had
+   the `watchFolders`/`nodeModulesPaths` config the old bare-RN scaffold had — so Metro
+   couldn't see the `@formcheck/rule-engine` symlink outside `app/`, and the very first
+   on-device bundle failed (`Unable to resolve module @formcheck/rule-engine`). Added
+   `app/metro.config.js` per [Expo's monorepo guide](https://docs.expo.dev/guides/monorepos/).
+   Verified with `npx expo export --platform ios` (857 modules, resolves clean) before
+   sending Graham back to re-scan.
+
+   **Verified end-to-end on Graham's iPhone via Expo Go (2026-07-28).** Full loop
+   confirmed live on-device: onboarding → program pick → Today → log set (no video) →
+   history; log set → form check (rotating demo clips: clean / valgus / high-squat /
+   both) → score ring + flag cards → save → history; unit toggle; program week view.
+   This is the first real device confirmation of the whole v1 UI shell, not just tests.
 6. Program JSONs — **2 of 5 done** ([programs/](programs/), free tier:
    `beginner_full_body_3d`, `beginner_upper_lower`), contract-validated via
    `programs/validate.mjs`. Paid three follow the same shape once a lifter reviews these.
@@ -83,13 +136,12 @@ Cross-agent payload schemas are now formal artifacts in [schemas/](schemas/)
 (`cv-keypoints.schema.json`, `rule-flags.schema.json`, JSON Schema 2020-12) — the
 CI-enforceable versions of the contracts, ready for ajv once the app repo exists.
 
-## Environment note before the RN scaffold
+## Environment note — resolved 2026-07-28
 
-This planning workspace lives in OneDrive, which fights `node_modules` (sync churn,
-file locks) and is not a git repo. The React Native app repo should be created
-**outside OneDrive** (e.g. `C:\dev\formcheck`) and under git from day one; this folder
-stays the contract/spec source of truth until then, at which point the pack moves into
-the repo as `/docs`.
+The repo lives at `C:\dev\formcheck` (outside OneDrive, deliberately — node_modules +
+sync don't mix), pushed to GitHub (`graham-learns-dev/Name-TBD`, rename when the app
+name lands). This `/docs` folder is now the source of truth for contracts; the original
+OneDrive drafts are superseded.
 
 ## Standing review rules for all workstreams
 
