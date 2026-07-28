@@ -293,16 +293,22 @@ cross-review before any implementation started.
    calendar view, hunting across mesocycles for old data). If Graham wants the dense
    table after seeing this, that's a well-scoped, separate follow-up.
 
+   **Correction (same day):** shipped an initial pass that also copied RP's true-black
+   + red palette. Graham redirected — structure yes, their colors no. Reverted
+   `theme.ts` to our own original identity (`#0E0F13` background, `#4C8DFF` blue
+   accent, `#FF4438` fault kept distinct from accent rather than doing double duty).
+   `accentDim`/`accentBorder` (needed for the pill selected/unselected pair) are now
+   derived from our blue, not their red. Everything below describes the *structural*
+   changes, which all survived the color correction unchanged.
+
    **What changed:**
-   - `theme.ts`: background → true black (`#0A0A0B`), accent → bold red (`#EE3A34`,
-     replacing blue), added `accentDim`/`accentBorder` for the selected/unselected
-     pill pair RP's feedback screen uses. `fault` now equals `accent` (red is doing
-     double duty as brand color and highest-severity flag color, matching RP's
-     single-accent-color approach). Title weight bumped 700 → 800.
+   - `theme.ts`: added `accentDim`/`accentBorder` for the selected/unselected pill
+     pair the pattern below uses. Title weight bumped 700 → 800 for more confident
+     headlines — a typographic choice, not a color one, kept through the correction.
    - `ui.tsx`: two new components — `ChoicePillGroup` (bold selectable pills, solid
-     red when picked / dark maroon outline when not — directly modeled on RP's
-     feedback-survey buttons) and `Badge` (small metadata tag, formalizing what
-     TodayScreen was doing with an inline one-off style).
+     accent fill when picked / dim outline when not — modeled on RP's feedback-survey
+     button *structure*, in our own blue) and `Badge` (small metadata tag, formalizing
+     what TodayScreen was doing with an inline one-off style).
    - `SetLoggerScreen`: RPE selector now uses `ChoicePillGroup` instead of small
      custom chips — same data, much closer to RP's actual touch target size and
      selected-state boldness. Added a prominent target-range banner ("Target: 5 reps
